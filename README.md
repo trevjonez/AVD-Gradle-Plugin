@@ -23,7 +23,7 @@ AVD {
 }
 ```
 
-###Tasks
+## Tasks
  - (root task) download sys-img list 
     - This is to enable us to check if updates are available without depending on parsing cli
  
@@ -34,3 +34,9 @@ AVD {
  - (per defined config) start emulator //figure out how to check if already running and skip?
  
  - (per defined config) stop emulator //only if it is running?   
+ 
+ ## Usage
+ Don't. It isn't usable yet. This readme is currently a scratch pad for the concept
+ 
+ Going to hold out for an update to the new `sdkmanager` cli that should help make the implementation of this plugin much more simple.
+ https://commonsware.com/blog/2016/12/12/sdkmanager-command-line-sdk-installs.html
