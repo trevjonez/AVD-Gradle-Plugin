@@ -18,19 +18,20 @@ apply plugin: 'kotlin'
 apply plugin: 'java-gradle-plugin'
 
 gradlePlugin {
-  plugins {
-    AGRP {
-      id = "com.trevjonez.AVD-Gradle-Plugin"
-      implementationClass = "com.trevjonez.avdgp.AvdPlugin"
+    plugins {
+        AvdPlugin {
+            id = "com.trevjonez.AVD-Gradle-Plugin"
+            implementationClass = "com.trevjonez.avdgp.AvdPlugin"
+        }
     }
-  }
 }
 
 dependencies {
-  compile group: "org.jetbrains.kotlin", name: "kotlin-stdlib", version: kotlin_version
+    implementation group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib', version: kotlin_version
+    api group: 'com.android.tools.build', name: 'gradle', version: '2.3.1'
 
-  testCompile group: 'junit', name: 'junit', version: '4.12'
-  testCompile group: 'org.assertj', name: 'assertj-core', version: '3.6.1'
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+    testCompile group: 'org.assertj', name: 'assertj-core', version: '3.6.1'
 }
 
 apply from: 'maven.gradle'
