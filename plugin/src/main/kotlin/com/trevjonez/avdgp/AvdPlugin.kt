@@ -23,7 +23,16 @@ import org.gradle.api.Project
  * @author TrevJonez
  */
 class AvdPlugin : Plugin<Project> {
-    override fun apply(project: Project) {
+    companion object {
+        const val GROUP = "Android Virtual Device Plugin"
+    }
 
+    lateinit var extension: AvdExtension
+
+    override fun apply(project: Project) {
+        extension = project.extensions.create("AVD", AvdExtension::class.java, project)
+        project.afterEvaluate {
+
+        }
     }
 }

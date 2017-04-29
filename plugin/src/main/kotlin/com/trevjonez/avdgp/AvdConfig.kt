@@ -16,14 +16,19 @@
 
 package com.trevjonez.avdgp
 
-import groovy.lang.Closure
-import org.gradle.api.NamedDomainObjectContainer
-import org.gradle.api.Project
+import com.android.sdklib.SdkVersionInfo
+import com.android.sdklib.devices.Abi
 
-open class AvdExtension(project: Project) {
-    val configs: NamedDomainObjectContainer<AvdConfig> = project.container(AvdConfig::class.java)
-
-    fun configs(closure: Closure<Any>) {
-        configs.configure(closure)
-    }
+open class AvdConfig(val name: String) {
+    var abi = Abi.X86_64
+    var api = SdkVersionInfo.HIGHEST_KNOWN_STABLE_API
+    var sdPath: String? = null
+    var sdSize: String? = null
+    var skin = "nexus_5x"
+    var type = "google_apis"
+    var port: Int? = null
+    var launch_options: String? = null
+    var wipe_data = true
+    var use_data: String? = null
+    var autoUpdate = false
 }

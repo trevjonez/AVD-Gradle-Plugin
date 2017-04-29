@@ -7,12 +7,12 @@ Gradle plugin to assist in managing android virtual devices
 AVD {
     configs {
         tablet_25 {
-            abi x86 | x86_64 | armeabi-v7a | arm64-v8a //com.android.sdklib.devices.Abi
-            api 25 
+            abi x86 | x86_64 | armeabi-v7a | arm64-v8a //(default x86_64)com.android.sdklib.devices.Abi
+            api 25 //(default highest stable api)
             sdPath relative/path //optional
             sdSize 1000M //optional
-            skin WXGA //figure out the list of options for this  file($ANDORID_SDK/skins) ?
-            type google_apis | android | android-wear | android-tv
+            skin "nexus_5x"
+            type google_apis | android | android-wear | android-tv //(default google_apis)
             port 12345 //optional auto assign default
             launch_options ""
             wipe_data false //(default true)
