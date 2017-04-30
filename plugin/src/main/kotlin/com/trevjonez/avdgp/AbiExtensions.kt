@@ -16,14 +16,13 @@
 
 package com.trevjonez.avdgp
 
-import groovy.lang.Closure
-import org.gradle.api.NamedDomainObjectContainer
-import org.gradle.api.Project
+import com.android.sdklib.devices.Abi
 
-open class AvdExtension(project: Project) {
-    val configs: NamedDomainObjectContainer<NamedConfigurationGroup> = project.container(NamedConfigurationGroup::class.java)
-
-    fun configs(closure: Closure<Any>) {
-        configs.configure(closure)
-    }
+fun validAbiArgs(): String {
+    return StringBuilder().apply {
+        Abi.values().forEachIndexed { index, abi ->
+            if (index > 0) append(", ")
+            append(abi.toString())
+        }
+    }.toString()
 }

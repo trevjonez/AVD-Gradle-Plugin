@@ -16,14 +16,11 @@
 
 package com.trevjonez.avdgp
 
-import groovy.lang.Closure
-import org.gradle.api.NamedDomainObjectContainer
-import org.gradle.api.Project
-
-open class AvdExtension(project: Project) {
-    val configs: NamedDomainObjectContainer<NamedConfigurationGroup> = project.container(NamedConfigurationGroup::class.java)
-
-    fun configs(closure: Closure<Any>) {
-        configs.configure(closure)
-    }
+class EmuConfig {
+    var memory: String? = null
+    var wipeData = true
+    var netDelay = NetDelay.NONE
+    var netSpeed = NetSpeed.FULL
+    var port: Int? = null
+    var otherArgs: String? = null
 }

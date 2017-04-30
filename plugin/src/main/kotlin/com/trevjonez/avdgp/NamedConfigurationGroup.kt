@@ -16,14 +16,10 @@
 
 package com.trevjonez.avdgp
 
-import groovy.lang.Closure
-import org.gradle.api.NamedDomainObjectContainer
-import org.gradle.api.Project
+open class NamedConfigurationGroup(val name: String) {
+    val avdConfig = AvdConfig()
+    fun avd(configure: AvdConfig.() -> Unit) = avdConfig.configure()
 
-open class AvdExtension(project: Project) {
-    val configs: NamedDomainObjectContainer<NamedConfigurationGroup> = project.container(NamedConfigurationGroup::class.java)
-
-    fun configs(closure: Closure<Any>) {
-        configs.configure(closure)
-    }
+    val emuConfig = EmuConfig()
+    fun emu(configure: EmuConfig.() -> Unit) = emuConfig.configure()
 }

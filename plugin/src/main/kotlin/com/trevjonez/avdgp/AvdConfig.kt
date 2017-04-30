@@ -19,16 +19,51 @@ package com.trevjonez.avdgp
 import com.android.sdklib.SdkVersionInfo
 import com.android.sdklib.devices.Abi
 
-open class AvdConfig(val name: String) {
+class AvdConfig {
     var abi = Abi.X86_64
-    var api = SdkVersionInfo.HIGHEST_KNOWN_STABLE_API
-    var sdPath: String? = null
+    var api: ApiLevel = ApiLevel.from(SdkVersionInfo.HIGHEST_KNOWN_STABLE_API)
+    var type = ApiType.GOOGLE_API
+    var deviceId: String? = null
     var sdSize: String? = null
-    var skin = "nexus_5x"
-    var type = "google_apis"
-    var port: Int? = null
-    var launch_options: String? = null
-    var wipe_data = true
-    var use_data: String? = null
-    var autoUpdate = false
+    var forceCreate = false
+
+    fun abi(abi: Abi) {
+        this.abi = abi
+    }
+
+    fun abi(abi: String) {
+        this.abi = Abi.getEnum(abi) ?: throw IllegalArgumentException("No such abi '$abi'. Valid args: ${validAbiArgs()}")
+    }
+
+    fun api(api: ApiLevel) {
+        this.api = api
+    }
+
+    fun api(api: Int) {
+        this.api = ApiLevel.from(api)
+    }
+
+    fun api(api: String) {
+        this.api = ApiLevel.from(api)
+    }
+
+    fun type(type: ApiType) {
+        this.type = type
+    }
+
+    fun type(type: String) {
+        this.type = ApiType.from(type)
+    }
+
+    fun deviceId(deviceId: String) {
+        this.deviceId = deviceId
+    }
+
+    fun sdSize(sdSize: String) {
+        this.sdSize = sdSize
+    }
+
+    fun forceCreate(forceCreate: Boolean) {
+        this.forceCreate = forceCreate
+    }
 }

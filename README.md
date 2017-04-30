@@ -4,21 +4,22 @@ Gradle plugin to assist in managing android virtual devices
 `android list sdk -a -e`
 
 ```groovy
-AVD {
-    configs {
-        tablet_25 {
-            abi x86 | x86_64 | armeabi-v7a | arm64-v8a //(default x86_64)com.android.sdklib.devices.Abi
+AVD.configs {
+    tablet_25 {
+        avd {
+            abi x86 | x86_64 | armeabi-v7a | arm64-v8a //(default x86_64)
             api 25 //(default highest stable api)
-            sdPath relative/path //optional
+            type 'google_apis_playstore' | 'google_apis' | 'default' | 'android-wear' | 'android-tv' //(default google_apis)
+            deviceId "pixel" //avdmanager list device
             sdSize 1000M //optional
-            skin "nexus_5x"
-            type google_apis | android | android-wear | android-tv //(default google_apis)
-            port 12345 //optional auto assign default
-            launch_options ""
-            wipe_data false //(default true)
-            use_data relative/path //optional
-            autoUpdate true //(default false) this will make the start task depend on the install task
+
         }
+        skin "nexus_5x"
+        port 12345 //optional auto assign default
+        launch_options ""
+        wipe_data false //(default true)
+        use_data relative/path //optional
+        autoUpdate true //(default false) this will make the start task depend on the install task
     }
 }
 ```
@@ -43,3 +44,6 @@ AVD {
  
  Giving up on holding out. Turns out you can get the class files for the sdkmanager cli tool by depending on the android gradle plugin. 
  This is better because I won't have to run exec tasks and parse anything I can just mimic it while using it as a guide to do the work I need done, I think...
+
+
+ `avdmanager create avd --name 'O_6P_Playstore' --package 'system-images;android-O;google_apis_playstore;x86' --device 'Nexus 6P' --tag 'google_apis_playstore'`
