@@ -16,32 +16,34 @@
 
 package com.trevjonez.avdgp
 
-data class NetSpeed(val cliValue: String) {
-    companion object {
-        @JvmStatic val GSM = NetSpeed("gsm")
-        @JvmStatic val HSCSD = NetSpeed("hscsd")
-        @JvmStatic val GPRS = NetSpeed("gprs")
-        @JvmStatic val EDGE = NetSpeed("edge")
-        @JvmStatic val UMTS = NetSpeed("umts")
-        @JvmStatic val HSDPA = NetSpeed("hsdpa")
-        @JvmStatic val LTE = NetSpeed("lte")
-        @JvmStatic val EVDO = NetSpeed("evdo")
-        @JvmStatic val FULL = NetSpeed("full")
+sealed class NetSpeed(open val cliValue: String) {
+    object GSM : NetSpeed(NetConstants.GSM)
+    object HSCSD : NetSpeed(NetConstants.HSCSD)
+    object GPRS : NetSpeed(NetConstants.GPRS)
+    object EDGE : NetSpeed(NetConstants.EDGE)
+    object UMTS : NetSpeed(NetConstants.UMTS)
+    object HSDPA : NetSpeed(NetConstants.HSDPA)
+    object LTE : NetSpeed(NetConstants.LTE)
+    object EVDO : NetSpeed(NetConstants.EVDO)
+    object FULL : NetSpeed(NetConstants.FULL)
 
+    data class Other(override val cliValue: String) : NetSpeed(cliValue)
+
+    companion object {
         @JvmStatic
         fun from(value: String): NetSpeed {
-            return when (value.toUpperCase()) {
-                "GSM" -> GSM
-                "HSCSD" -> HSCSD
-                "GPRS" -> GPRS
-                "EDGE" -> EDGE
-                "UMTS" -> UMTS
-                "HSDPA" -> HSDPA
-                "LTE" -> LTE
-                "EVDO" -> EVDO
-                "FULL" -> FULL
+            return when (value.toLowerCase()) {
+                NetConstants.GSM -> GSM
+                NetConstants.HSCSD -> HSCSD
+                NetConstants.GPRS -> GPRS
+                NetConstants.EDGE -> EDGE
+                NetConstants.UMTS -> UMTS
+                NetConstants.HSDPA -> HSDPA
+                NetConstants.LTE -> LTE
+                NetConstants.EVDO -> EVDO
+                NetConstants.FULL -> FULL
                 else -> {
-                    if (Regex("[0-9]+").matches(value) || Regex("[0-9]+:[0-9]+").matches(value)) NetSpeed(value)
+                    if (Regex("[0-9]+").matches(value) || Regex("[0-9]+:[0-9]+").matches(value)) NetSpeed.Other(value)
                     else throw IllegalArgumentException("NetSpeed must be of format '[0-9]+' or '[0-9]+:[0-9]+' or be one of: GSM, HSCSD, GPRS, EDGE, UMTS, HSDPA, LTE, EVDO, FULL")
                 }
             }

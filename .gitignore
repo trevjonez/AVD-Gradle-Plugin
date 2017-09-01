@@ -4,6 +4,8 @@ build/
 .idea/libraries
 .idea/modules
 .idea/compiler.xml
+.idea/dbnavigator.xml
+.idea/workspace.xml
 .idea/gradle.xml
 .idea/misc.xml
 .idea/modules.xml

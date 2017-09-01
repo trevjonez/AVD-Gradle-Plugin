@@ -16,8 +16,6 @@
 
 package com.trevjonez.avdgp
 
-import com.android.utils.FileUtils
-import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
 import org.junit.Rule
 import org.junit.Test
@@ -28,30 +26,19 @@ import java.io.File
 
 @RunWith(JUnit4::class)
 class PluginTest {
-    @Rule @JvmField var testProjectDir = TemporaryFolder()
+    @get:Rule val testProjectDir = TemporaryFolder()
 
     @Test
-    @Throws(Exception::class)
-    fun testProjectBuild() {
-        invokeBuild(copyProjectToTempFolder("test-project"))
-    }
+    fun testForBasicTaskCreation() {
 
-    private fun copyProjectToTempFolder(projectDir: String): File {
-        return testProjectDir.newFolder(projectDir).also {
-            FileUtils.copyDirectory(File(javaClass.classLoader.getResource(projectDir).path), it)
-            File(it, "local.properties").writeText("sdk.dir=${System.getenv("HOME")}/Library/Android/sdk", Charsets.UTF_8)
-            File(it, "libs").also {
-                it.mkdir()
-                FileUtils.copyFileToDirectory(File(".", "build/libs/plugin.jar"), it)
-            }
+        testProjectDir.apply {
+            File(root, "local.properties").writeText("sdk.dir=${System.getenv("ANDROID_HOME")}", Charsets.UTF_8)
         }
-    }
 
-    private fun invokeBuild(projectDir: File): BuildResult {
-        return GradleRunner.create()
-                .withGradleVersion("3.4.1")
-                .withProjectDir(projectDir)
-                .withArguments("tasks", "assembleDebug", "--stacktrace")
+        GradleRunner.create()
+                .withGradleVersion("4.1")
+                .withProjectDir(testProjectDir.root)
+                .withArguments("tasks", "--stacktrace")
                 .withDebug(true)
                 .forwardOutput()
                 .build()
