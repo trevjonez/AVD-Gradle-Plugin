@@ -16,23 +16,25 @@
 
 package com.trevjonez.avdgp
 
-data class ApiLevel(val cliValue: String) {
+enum class ApiLevel(val cliValue: String) {
+
+    `14`("android-14"),
+    `15`("android-15"),
+    `16`("android-16"),
+    `17`("android-17"),
+    `18`("android-18"),
+    `19`("android-19"),
+    `21`("android-21"),
+    `22`("android-22"),
+    `23`("android-23"),
+    `24`("android-24"),
+    `25`("android-25"),
+    `26`("android-O");
 
     companion object {
-        @JvmStatic val `14` = ApiLevel("android-14")
-        @JvmStatic val `15` = ApiLevel("android-15")
-        @JvmStatic val `16` = ApiLevel("android-16")
-        @JvmStatic val `17` = ApiLevel("android-17")
-        @JvmStatic val `18` = ApiLevel("android-18")
-        @JvmStatic val `19` = ApiLevel("android-19")
-        @JvmStatic val `21` = ApiLevel("android-21")
-        @JvmStatic val `22` = ApiLevel("android-22")
-        @JvmStatic val `23` = ApiLevel("android-23")
-        @JvmStatic val `24` = ApiLevel("android-24")
-        @JvmStatic val `25` = ApiLevel("android-25")
-        @JvmStatic val `26` = ApiLevel("android-O")
 
-        @JvmStatic fun from(value: String): ApiLevel {
+        @JvmStatic
+        fun from(value: String): ApiLevel {
             return when (value.toUpperCase()) {
                 "14" -> `14`
                 "15", "I" -> `15`
@@ -50,7 +52,8 @@ data class ApiLevel(val cliValue: String) {
             }
         }
 
-        @JvmStatic fun from(value: Int): ApiLevel {
+        @JvmStatic
+        fun from(value: Int): ApiLevel {
             return when (value) {
                 14 -> `14`
                 15 -> `15`

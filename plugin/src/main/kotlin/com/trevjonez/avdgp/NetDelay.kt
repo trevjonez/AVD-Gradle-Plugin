@@ -16,33 +16,35 @@
 
 package com.trevjonez.avdgp
 
-data class NetDelay internal constructor(val cliValue: String) {
+sealed class NetDelay(open val cliValue: String) {
+
+    object GSM : NetDelay(NetConstants.GSM)
+    object HSCSD : NetDelay(NetConstants.HSCSD)
+    object GPRS : NetDelay(NetConstants.GPRS)
+    object EDGE : NetDelay(NetConstants.EDGE)
+    object UMTS : NetDelay(NetConstants.UMTS)
+    object HSDPA : NetDelay(NetConstants.HSDPA)
+    object LTE : NetDelay(NetConstants.LTE)
+    object EVDO : NetDelay(NetConstants.EVDO)
+    object NONE : NetDelay(NetConstants.NONE)
+
+    data class Other(override val cliValue: String) : NetDelay(cliValue)
 
     companion object {
-        @JvmStatic val GSM = NetDelay("gsm")
-        @JvmStatic val HSCSD = NetDelay("hscsd")
-        @JvmStatic val GPRS = NetDelay("gprs")
-        @JvmStatic val EDGE = NetDelay("edge")
-        @JvmStatic val UMTS = NetDelay("umts")
-        @JvmStatic val HSDPA = NetDelay("hsdpa")
-        @JvmStatic val LTE = NetDelay("lte")
-        @JvmStatic val EVDO = NetDelay("evdo")
-        @JvmStatic val NONE = NetDelay("none")
-
         @JvmStatic
         fun from(value: String): NetDelay {
             return when (value.toUpperCase()) {
-                "GSM" -> GSM
-                "HSCSD" -> HSCSD
-                "GPRS" -> GPRS
-                "EDGE" -> EDGE
-                "UMTS" -> UMTS
-                "HSDPA" -> HSDPA
-                "LTE" -> LTE
-                "EVDO" -> EVDO
-                "NONE" -> NONE
+                NetConstants.GSM -> GSM
+                NetConstants.HSCSD -> HSCSD
+                NetConstants.GPRS -> GPRS
+                NetConstants.EDGE -> EDGE
+                NetConstants.UMTS -> UMTS
+                NetConstants.HSDPA -> HSDPA
+                NetConstants.LTE -> LTE
+                NetConstants.EVDO -> EVDO
+                NetConstants.NONE -> NONE
                 else -> {
-                    if (Regex("[0-9]+").matches(value) || Regex("[0-9]+:[0-9]+").matches(value)) NetDelay(value)
+                    if (Regex("[0-9]+").matches(value) || Regex("[0-9]+:[0-9]+").matches(value)) NetDelay.Other(value)
                     else throw IllegalArgumentException("NetDelay must be of format '[0-9]+' or '[0-9]+:[0-9]+' or be one of: GSM, HSCSD, GPRS, EDGE, UMTS, HSDPA, LTE, EVDO, NONE")
                 }
             }
