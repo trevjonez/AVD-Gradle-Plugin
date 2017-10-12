@@ -14,15 +14,13 @@
  * limitations under the License.
  */
 
-package com.trevjonez.avdgp
+package com.trevjonez.avdgp.dsl
 
-import com.android.sdklib.devices.Abi
-
-fun validAbiArgs(): String {
-    return StringBuilder().apply {
-        Abi.values().forEachIndexed { index, abi ->
-            if (index > 0) append(", ")
-            append(abi.toString())
-        }
-    }.toString()
+class EmuConfig {
+    var memory: String? = null
+    var wipeData = true
+    var netDelay = NetDelay.NONE
+    var netSpeed = NetSpeed.FULL
+    var port: Int? = null
+    var otherArgs: String? = null
 }

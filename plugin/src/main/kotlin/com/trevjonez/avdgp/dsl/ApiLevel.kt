@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.trevjonez.avdgp
+package com.trevjonez.avdgp.dsl
 
 enum class ApiLevel(val cliValue: String) {
 
@@ -29,7 +29,7 @@ enum class ApiLevel(val cliValue: String) {
     `23`("android-23"),
     `24`("android-24"),
     `25`("android-25"),
-    `26`("android-O");
+    `26`("android-26");
 
     companion object {
 

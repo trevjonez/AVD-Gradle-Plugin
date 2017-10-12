@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016. Trevor Jones
+ * Copyright (c) 2017. Trevor Jones
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,23 +14,12 @@
  * limitations under the License.
  */
 
-package com.trevjonez.avdgp
+package com.trevjonez.avdgp.dsl
 
-import com.trevjonez.avdgp.dsl.AvdExtension
-import org.gradle.api.Plugin
-import org.gradle.api.Project
+open class NamedConfigurationGroup(val name: String) {
+    val avdConfig = AvdConfig()
+    fun avd(configure: AvdConfig.() -> Unit) = avdConfig.configure()
 
-class AvdPlugin : Plugin<Project> {
-    companion object {
-        const val GROUP = "Android Virtual Device Plugin"
-    }
-
-    lateinit var extension: AvdExtension
-
-    override fun apply(project: Project) {
-        extension = project.extensions.create("AVD", AvdExtension::class.java, project)
-        project.afterEvaluate {
-
-        }
-    }
+    val emuConfig = EmuConfig()
+    fun emu(configure: EmuConfig.() -> Unit) = emuConfig.configure()
 }

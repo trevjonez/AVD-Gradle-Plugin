@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.trevjonez.avdgp
+package com.trevjonez.avdgp.dsl
 
 enum class ApiType(val cliValue: String) {
     DEFAULT("default"),

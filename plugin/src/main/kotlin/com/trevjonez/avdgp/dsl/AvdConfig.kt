@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.trevjonez.avdgp
+package com.trevjonez.avdgp.dsl
 
 import com.android.sdklib.SdkVersionInfo
 import com.android.sdklib.devices.Abi

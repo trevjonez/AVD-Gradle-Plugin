@@ -26,13 +26,13 @@ import java.io.File
 
 @RunWith(JUnit4::class)
 class PluginTest {
-    @get:Rule val testProjectDir = TemporaryFolder()
+    @get:Rule val testProjectDir = BuildDirFolder("PluginTest")
 
     @Test
     fun testForBasicTaskCreation() {
 
         testProjectDir.apply {
-            File(root, "local.properties").writeText("sdk.dir=${System.getenv("ANDROID_HOME")}", Charsets.UTF_8)
+            File(file, "local.properties").writeText("sdk.dir=${System.getenv("ANDROID_HOME")}", Charsets.UTF_8)
         }
 
         GradleRunner.create()

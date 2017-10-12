@@ -17,6 +17,7 @@
 apply plugin: 'nebula.kotlin'
 apply plugin: 'java-gradle-plugin'
 apply plugin: 'maven'
+apply plugin: 'de.undercouch.download'
 
 group = rootProject.group
 version = rootProject.version
@@ -43,9 +44,11 @@ test {
     testLogging.showStandardStreams = true
     testLogging.exceptionFormat = 'full'
     systemProperty("AVD", version)
+    systemProperty("sdkToolsZipPath", "$buildDir/sdk-tools.zip")
 }
 
 tasks.findByPath('test').dependsOn(':plugin:install')
+tasks.findByPath('test').dependsOn(':plugin:downloadSdkTools')
 
 task sourcesJar(type: Jar, dependsOn: classes) {
     classifier 'sources'
@@ -78,3 +81,10 @@ install {
     }
 }
 
+import de.undercouch.gradle.tasks.download.Download
+
+task downloadSdkTools(type: Download) {
+    src "https://dl.google.com/android/repository/sdk-tools-darwin-3859397.zip"
+    dest file("$buildDir/sdk-tools.zip")
+    onlyIfModified true
+}

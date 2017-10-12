@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.trevjonez.avdgp
+package com.trevjonez.avdgp.dsl
 
 object NetConstants {
     const val GSM = "gsm"

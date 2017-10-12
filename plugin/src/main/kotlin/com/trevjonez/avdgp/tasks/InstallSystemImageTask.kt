@@ -14,13 +14,18 @@
  * limitations under the License.
  */
 
-package com.trevjonez.avdgp
+package com.trevjonez.avdgp.tasks
 
-class EmuConfig {
-    var memory: String? = null
-    var wipeData = true
-    var netDelay = NetDelay.NONE
-    var netSpeed = NetSpeed.FULL
-    var port: Int? = null
-    var otherArgs: String? = null
+import org.gradle.api.DefaultTask
+import org.gradle.api.tasks.Input
+import java.io.File
+
+open class InstallSystemImageTask: DefaultTask() {
+
+    @get:Input
+    lateinit var sdkPath: File
+
+    fun invoke() {
+
+    }
 }

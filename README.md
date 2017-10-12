@@ -19,7 +19,7 @@ AVD.configs {
         launch_options ""
         wipe_data false //(default true)
         use_data relative/path //optional
-        autoUpdate true //(default false) this will make the start task depend on the install task
+        autoUpdate false //(default true)
     }
 }
 ```
@@ -30,7 +30,7 @@ AVD.configs {
  
  - (per unique sys image) install/update sys-img `if (!file("$ANDROID_HOME/system_images/android-$api/$type/$abi/source.properties").exists())` 
     - This file has the rev number etc to match against the sys-img.xml file.
-    - `android update sdk --no-ui --all --filter "sys-img-x86_64-google_apis-25"` <- `"sys-img-$abi-$type-$api"`
+    - `sdkmanager --install "system-images;android-25;google_apis_playstore;x86"`
  
  - (per defined config) start emulator //figure out how to check if already running and skip?
  

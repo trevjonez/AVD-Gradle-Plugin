@@ -14,26 +14,25 @@
  * limitations under the License.
  */
 
-package com.trevjonez.avdgp
+package com.trevjonez.avdgp.dsl
 
-sealed class NetDelay(open val cliValue: String) {
+sealed class NetSpeed(open val cliValue: String) {
+    object GSM : NetSpeed(NetConstants.GSM)
+    object HSCSD : NetSpeed(NetConstants.HSCSD)
+    object GPRS : NetSpeed(NetConstants.GPRS)
+    object EDGE : NetSpeed(NetConstants.EDGE)
+    object UMTS : NetSpeed(NetConstants.UMTS)
+    object HSDPA : NetSpeed(NetConstants.HSDPA)
+    object LTE : NetSpeed(NetConstants.LTE)
+    object EVDO : NetSpeed(NetConstants.EVDO)
+    object FULL : NetSpeed(NetConstants.FULL)
 
-    object GSM : NetDelay(NetConstants.GSM)
-    object HSCSD : NetDelay(NetConstants.HSCSD)
-    object GPRS : NetDelay(NetConstants.GPRS)
-    object EDGE : NetDelay(NetConstants.EDGE)
-    object UMTS : NetDelay(NetConstants.UMTS)
-    object HSDPA : NetDelay(NetConstants.HSDPA)
-    object LTE : NetDelay(NetConstants.LTE)
-    object EVDO : NetDelay(NetConstants.EVDO)
-    object NONE : NetDelay(NetConstants.NONE)
-
-    data class Other(override val cliValue: String) : NetDelay(cliValue)
+    data class Other(override val cliValue: String) : NetSpeed(cliValue)
 
     companion object {
         @JvmStatic
-        fun from(value: String): NetDelay {
-            return when (value.toUpperCase()) {
+        fun from(value: String): NetSpeed {
+            return when (value.toLowerCase()) {
                 NetConstants.GSM -> GSM
                 NetConstants.HSCSD -> HSCSD
                 NetConstants.GPRS -> GPRS
@@ -42,10 +41,10 @@ sealed class NetDelay(open val cliValue: String) {
                 NetConstants.HSDPA -> HSDPA
                 NetConstants.LTE -> LTE
                 NetConstants.EVDO -> EVDO
-                NetConstants.NONE -> NONE
+                NetConstants.FULL -> FULL
                 else -> {
-                    if (Regex("[0-9]+").matches(value) || Regex("[0-9]+:[0-9]+").matches(value)) NetDelay.Other(value)
-                    else throw IllegalArgumentException("NetDelay must be of format '[0-9]+' or '[0-9]+:[0-9]+' or be one of: GSM, HSCSD, GPRS, EDGE, UMTS, HSDPA, LTE, EVDO, NONE")
+                    if (Regex("[0-9]+").matches(value) || Regex("[0-9]+:[0-9]+").matches(value)) Other(value)
+                    else throw IllegalArgumentException("NetSpeed must be of format '[0-9]+' or '[0-9]+:[0-9]+' or be one of: GSM, HSCSD, GPRS, EDGE, UMTS, HSDPA, LTE, EVDO, FULL")
                 }
             }
         }

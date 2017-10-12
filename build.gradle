@@ -24,6 +24,7 @@ buildscript {
     dependencies {
         classpath group: 'org.jetbrains.kotlin', name: 'kotlin-gradle-plugin', version: kotlin_version
         classpath group: 'com.netflix.nebula', name: 'nebula-kotlin-plugin', version: kotlin_version
+        classpath group: 'de.undercouch', name: 'gradle-download-task', version: '3.3.0'
     }
 }
 
