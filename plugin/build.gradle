@@ -43,12 +43,12 @@ dependencies {
 test {
     testLogging.showStandardStreams = true
     testLogging.exceptionFormat = 'full'
-    systemProperty("AVD", version)
+    systemProperty("avd_plugin_version", version)
     systemProperty("sdkToolsPath", "$buildDir/Android/sdk/tools/")
 }
 
 tasks.findByPath('test').dependsOn(':plugin:install')
-tasks.findByPath('test').dependsOn(':plugin:downloadSdkTools')
+tasks.findByPath('test').dependsOn(':plugin:unzipSdkTools')
 
 task sourcesJar(type: Jar, dependsOn: classes) {
     classifier 'sources'
@@ -72,6 +72,7 @@ install {
             inceptionYear '2016'
             licenses {
                 license {
+                    //noinspection GroovyAssignabilityCheck
                     name 'The Apache Software License, Version 2.0'
                     url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
                     distribution 'repo'

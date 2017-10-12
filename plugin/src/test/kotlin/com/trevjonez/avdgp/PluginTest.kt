@@ -17,6 +17,7 @@
 package com.trevjonez.avdgp
 
 import org.gradle.testkit.runner.GradleRunner
+import org.intellij.lang.annotations.Language
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -43,6 +44,32 @@ class PluginTest {
 
             projectDir = childDirectory("sampleProject") {
                 childFile("local.properties").writeText("sdk.dir=${sdkDir?.absolutePath}")
+                @Language("Groovy")
+                val buildFile = """
+                    buildscript {
+                        repositories {
+                            google()
+                            jcenter()
+                            mavenLocal()
+                        }
+                        dependencies {
+                            classpath "com.github.trevjonez:AVD-Gradle-Plugin:${System.getProperty("avd_plugin_version")}"
+                        }
+                    }
+                    apply plugin: 'AVD'
+
+                    AVD.configs {
+                        "Nexus 5x API O" {
+                            avd {
+                                abi "x86_64"
+                                api 26
+                                type "google_apis"
+                                deviceId "Nexus 5X"
+                            }
+                        }
+                    }
+                """.trimIndent()
+                childFile("build.gradle").writeText(buildFile)
             }
         }
 

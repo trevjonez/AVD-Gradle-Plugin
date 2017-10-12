@@ -16,10 +16,23 @@
 
 package com.trevjonez.avdgp.dsl
 
+import groovy.lang.Closure
+
 open class NamedConfigurationGroup(val name: String) {
     val avdConfig = AvdConfig()
-    fun avd(configure: AvdConfig.() -> Unit) = avdConfig.configure()
+    fun avd(configure: Closure<AvdConfig>) {
+        configure.delegate = avdConfig
+        configure.call()
+    }
 
     val emuConfig = EmuConfig()
-    fun emu(configure: EmuConfig.() -> Unit) = emuConfig.configure()
+    fun emu(configure: Closure<EmuConfig>) {
+        configure.delegate = emuConfig
+        configure.call()
+    }
+
+    var autoUpdate: Boolean = true
+    fun autoUpdate(value: Boolean) {
+        autoUpdate = value
+    }
 }

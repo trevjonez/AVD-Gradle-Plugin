@@ -10,7 +10,7 @@ AVD.configs {
             abi x86 | x86_64 | armeabi-v7a | arm64-v8a //(default x86_64)
             api 25 //(default highest stable api)
             type 'google_apis_playstore' | 'google_apis' | 'default' | 'android-wear' | 'android-tv' //(default google_apis)
-            deviceId "pixel" //avdmanager list device
+            deviceId "pixel" //from avdmanager list device
             sdSize 1000M //optional
 
         }
@@ -18,7 +18,8 @@ AVD.configs {
         port 12345 //optional auto assign default
         launch_options ""
         wipe_data false //(default true)
-        use_data relative/path //optional
+        use_data file('path') //optional
+        
         autoUpdate false //(default true)
     }
 }
