@@ -44,7 +44,7 @@ test {
     testLogging.showStandardStreams = true
     testLogging.exceptionFormat = 'full'
     systemProperty("AVD", version)
-    systemProperty("sdkToolsZipPath", "$buildDir/sdk-tools.zip")
+    systemProperty("sdkToolsPath", "$buildDir/Android/sdk/tools/")
 }
 
 tasks.findByPath('test').dependsOn(':plugin:install')
@@ -87,4 +87,10 @@ task downloadSdkTools(type: Download) {
     src "https://dl.google.com/android/repository/sdk-tools-darwin-3859397.zip"
     dest file("$buildDir/sdk-tools.zip")
     onlyIfModified true
+}
+
+task unzipSdkTools(type: Copy) {
+    from zipTree(downloadSdkTools.dest)
+    into file("$buildDir/Android/sdk/")
+    dependsOn downloadSdkTools
 }
