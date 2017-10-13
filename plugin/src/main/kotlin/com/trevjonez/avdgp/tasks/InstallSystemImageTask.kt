@@ -16,7 +16,6 @@
 
 package com.trevjonez.avdgp.tasks
 
-import com.android.sdklib.SdkVersionInfo
 import com.android.sdklib.devices.Abi
 import com.trevjonez.avdgp.dsl.ApiLevel
 import com.trevjonez.avdgp.dsl.ApiType
@@ -39,11 +38,13 @@ open class InstallSystemImageTask : DefaultTask() {
     lateinit var type: ApiType
 
     fun invoke() {
-
+        val manager = SdkManager(File(sdkPath, "tools${File.separator}bin${File.separator}sdkmanager"))
+        val (obs, callback) = manager.install(systemImageKey())
+        obs.subscribe()
     }
-
 
     fun systemImageKey(): String {
         return "system-images;${api.cliValue};${type.cliValue};${abi.cpuArch}"
     }
 }
+

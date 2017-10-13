@@ -21,8 +21,6 @@ AVD.configs {
             wipe_data false //(default true)
             use_data file('path') //optional
         }
-        
-        autoUpdate false //(default true)
     }
 }
 ```

@@ -23,6 +23,9 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
+import org.gradle.api.logging.Logger
+import java.io.File
+import java.util.Properties
 import kotlin.reflect.KClass
 
 class AvdPlugin : Plugin<Project> {
@@ -32,8 +35,12 @@ class AvdPlugin : Plugin<Project> {
 
     lateinit var extension: AvdExtension
 
+    private lateinit var logger: Logger
+
     override fun apply(project: Project) {
         extension = project.extensions.create("AVD", AvdExtension::class.java, project)
+
+        logger = project.logger
         project.afterEvaluate {
             extension.configs
                     .fold(mutableMapOf<String, NamedConfigurationGroup>()) { set, config ->
@@ -44,12 +51,36 @@ class AvdPlugin : Plugin<Project> {
                                 type = InstallSystemImageTask::class,
                                 name = config.installTaskName(),
                                 description = "Install/Update system image").apply {
+                            sdkPath = File(lookupSdkPath())
                             api = config.avdConfig.api
                             abi = config.avdConfig.abi
                             type = config.avdConfig.type
                         }
                     }
         }
+    }
+
+    private fun lookupSdkPath(): String {
+        val localPropFile = File("local.properties")
+        if (localPropFile.exists()) {
+
+            val localProperties = Properties().apply {
+                load(localPropFile.inputStream())
+            }
+            val sdkDir = localProperties.getProperty("sdk.dir")
+            if (sdkDir != null && File(sdkDir).exists()) {
+                logger.info("Using sdk.dir path for avd plugin: $sdkDir")
+                return sdkDir
+            }
+        }
+
+        val androidHome = System.getenv("ANDROID_HOME")
+        if (androidHome != null && File(androidHome).exists()) {
+            logger.info("Using android home path for avd plugin: $androidHome")
+            return androidHome
+        }
+
+        throw IllegalStateException("Unable to find android sdk. Specify ANDROID_HOME env variable or sdk.dir in local.properties")
     }
 
     private fun <T : DefaultTask> Project.createTask(type: KClass<T>,
