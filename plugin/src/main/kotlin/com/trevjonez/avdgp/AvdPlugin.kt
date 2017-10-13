@@ -17,8 +17,13 @@
 package com.trevjonez.avdgp
 
 import com.trevjonez.avdgp.dsl.AvdExtension
+import com.trevjonez.avdgp.dsl.NamedConfigurationGroup
+import com.trevjonez.avdgp.tasks.InstallSystemImageTask
+import org.gradle.api.DefaultTask
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.Task
+import kotlin.reflect.KClass
 
 class AvdPlugin : Plugin<Project> {
     companion object {
@@ -30,7 +35,34 @@ class AvdPlugin : Plugin<Project> {
     override fun apply(project: Project) {
         extension = project.extensions.create("AVD", AvdExtension::class.java, project)
         project.afterEvaluate {
-
+            extension.configs
+                    .fold(mutableMapOf<String, NamedConfigurationGroup>()) { set, config ->
+                        set.apply { put(config.systemImageKey(), config) }
+                    }
+                    .forEach { (_, config) ->
+                        project.createTask(
+                                type = InstallSystemImageTask::class,
+                                name = config.installTaskName(),
+                                description = "Install/Update system image").apply {
+                            api = config.avdConfig.api
+                            abi = config.avdConfig.abi
+                            type = config.avdConfig.type
+                        }
+                    }
         }
+    }
+
+    private fun <T : DefaultTask> Project.createTask(type: KClass<T>,
+                                                     name: String,
+                                                     group: String = GROUP,
+                                                     description: String? = null,
+                                                     dependsOn: List<Task>? = null): T {
+        return type.java.cast(project.tasks.create(LinkedHashMap<String, Any>().apply {
+            put("name", name)
+            put("type", type.java)
+            put("group", group)
+            description?.let { put("description", it) }
+            dependsOn?.let { put("dependsOn", it) }
+        }))
     }
 }

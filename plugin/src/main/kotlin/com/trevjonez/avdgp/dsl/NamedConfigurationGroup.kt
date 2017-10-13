@@ -19,6 +19,9 @@ package com.trevjonez.avdgp.dsl
 import groovy.lang.Closure
 
 open class NamedConfigurationGroup(val name: String) {
+
+    val escapedName = name.replace(' ', '_')
+
     val avdConfig = AvdConfig()
     fun avd(configure: Closure<AvdConfig>) {
         configure.delegate = avdConfig
@@ -34,5 +37,13 @@ open class NamedConfigurationGroup(val name: String) {
     var autoUpdate: Boolean = true
     fun autoUpdate(value: Boolean) {
         autoUpdate = value
+    }
+
+    fun systemImageKey(): String {
+        return "system-images;${avdConfig.api.cliValue};${avdConfig.type.cliValue};${avdConfig.abi.cpuArch}"
+    }
+
+    fun installTaskName(): String {
+        return "installSystemImage_api${avdConfig.api.name}_${avdConfig.type.displayName()}_${avdConfig.abi.cpuArch}"
     }
 }

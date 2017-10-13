@@ -7,29 +7,28 @@ Gradle plugin to assist in managing android virtual devices
 AVD.configs {
     tablet_25 {
         avd {
-            abi x86 | x86_64 | armeabi-v7a | arm64-v8a //(default x86_64)
+            abi "x86" | "x86_64" | "armeabi-v7a" | "arm64-v8a" //(default x86_64)
             api 25 //(default highest stable api)
             type 'google_apis_playstore' | 'google_apis' | 'default' | 'android-wear' | 'android-tv' //(default google_apis)
             deviceId "pixel" //from avdmanager list device
-            sdSize 1000M //optional
+            sdSize "1000M" //optional
 
         }
-        skin "nexus_5x"
-        port 12345 //optional auto assign default
-        launch_options ""
-        wipe_data false //(default true)
-        use_data file('path') //optional
+        emu {
+            skin "nexus_5x"
+            port 12345 //optional auto assign default
+            launch_options ""
+            wipe_data false //(default true)
+            use_data file('path') //optional
+        }
         
         autoUpdate false //(default true)
     }
 }
 ```
 
-## Tasks
- - (root task) download sys-img list `repoManager.loadSynchronously(...)`
-    - This is to enable us to check if updates are available and spit out that type of info
- 
- - (per unique sys image) install/update sys-img `if (!file("$ANDROID_HOME/system_images/android-$api/$type/$abi/source.properties").exists())` 
+## Tasks 
+ - (per unique sys image) install/update sys-img 
     - This file has the rev number etc to match against the sys-img.xml file.
     - `sdkmanager --install "system-images;android-25;google_apis_playstore;x86"`
  

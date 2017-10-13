@@ -22,7 +22,15 @@ import org.gradle.api.NamedDomainObjectFactory
 import org.gradle.api.Project
 
 open class AvdExtension(project: Project) {
-    val configs: NamedDomainObjectContainer<NamedConfigurationGroup> = project.container(NamedConfigurationGroup::class.java)
+    companion object {
+        val avdNameRegex = Regex("""[a-zA-Z0-9._() -]+""")
+    }
+
+    val configs: NamedDomainObjectContainer<NamedConfigurationGroup> =
+            project.container(NamedConfigurationGroup::class.java) { name ->
+                require(name matches avdNameRegex) { "AVD name must be of form `${avdNameRegex.pattern}`: $name" }
+                NamedConfigurationGroup(name)
+            }
 
     fun configs(closure: Closure<Any>) {
         configs.configure(closure)

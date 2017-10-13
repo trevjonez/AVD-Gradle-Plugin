@@ -16,16 +16,34 @@
 
 package com.trevjonez.avdgp.tasks
 
+import com.android.sdklib.SdkVersionInfo
+import com.android.sdklib.devices.Abi
+import com.trevjonez.avdgp.dsl.ApiLevel
+import com.trevjonez.avdgp.dsl.ApiType
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.Input
 import java.io.File
 
-open class InstallSystemImageTask: DefaultTask() {
+open class InstallSystemImageTask : DefaultTask() {
 
     @get:Input
     lateinit var sdkPath: File
 
+    @get:Input
+    lateinit var abi: Abi
+
+    @get:Input
+    lateinit var api: ApiLevel
+
+    @get:Input
+    lateinit var type: ApiType
+
     fun invoke() {
 
+    }
+
+
+    fun systemImageKey(): String {
+        return "system-images;${api.cliValue};${type.cliValue};${abi.cpuArch}"
     }
 }

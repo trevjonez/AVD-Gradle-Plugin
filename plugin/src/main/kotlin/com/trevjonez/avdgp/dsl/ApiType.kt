@@ -35,4 +35,14 @@ enum class ApiType(val cliValue: String) {
             }
         }
     }
+
+    fun displayName(): String {
+        return when (this) {
+            DEFAULT -> "Default"
+            GOOGLE_API -> "GoogleApis"
+            GOOGLE_PLAYSTORE -> "Playstore"
+            ANDROID_TV -> "Tv"
+            ANDROID_WEAR -> "Wear"
+         }
+    }
 }
