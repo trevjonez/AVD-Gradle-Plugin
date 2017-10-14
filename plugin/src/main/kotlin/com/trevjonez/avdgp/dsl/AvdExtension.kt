@@ -44,4 +44,9 @@ open class AvdExtension(project: Project) {
     fun acceptAndroidSdkLicense(value: Boolean) {
         acceptAndroidSdkLicense = value
     }
+
+    var autoUpdate: Boolean = true
+    fun autoUpdate(value: Boolean) {
+        autoUpdate = value
+    }
 }

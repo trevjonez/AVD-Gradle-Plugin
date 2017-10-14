@@ -55,7 +55,9 @@ class AvdPlugin : Plugin<Project> {
                             api = config.avdConfig.api
                             abi = config.avdConfig.abi
                             type = config.avdConfig.type
-                            configDsl = extension
+                            acceptSdkLicense = extension.acceptAndroidSdkLicense
+                            acceptSdkPreviewLicense = extension.acceptAndroidSdkPreviewLicense
+                            autoUpdate = extension.autoUpdate
                         }
                     }
         }

@@ -16,6 +16,7 @@
 
 package com.trevjonez.avdgp
 
+import org.junit.rules.TemporaryFolder
 import org.junit.rules.TestRule
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
@@ -23,14 +24,23 @@ import java.io.File
 
 class BuildDirFolder(private val intermediateDirName: String? = null) : TestRule {
 
+    annotation class UseTemporaryFolder
+
+    private val tempRule = TemporaryFolder()
     private lateinit var directory: File
 
-    val file: File
+    var usingTemp = false
+    val root: File
         get() {
-            return directory
+            return if (usingTemp) tempRule.root else directory
         }
 
     override fun apply(base: Statement, description: Description): Statement {
+        if (description.getAnnotation(UseTemporaryFolder::class.java) != null) {
+            usingTemp = true
+            return tempRule.apply(base, description)
+        }
+
         return object : Statement() {
             override fun evaluate() {
                 val dirName = description.methodName.let {

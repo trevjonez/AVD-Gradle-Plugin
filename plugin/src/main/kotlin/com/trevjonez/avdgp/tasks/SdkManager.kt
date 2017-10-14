@@ -177,8 +177,9 @@ class SdkManager(private val sdkManager: File, private val logger: Logger) {
                     if (!emitter.isDisposed && next != null) {
                         emitter.onNext(next)
                     } else {
+                        logger.info("disposed: ${emitter.isDisposed}, next: '$next'")
                         skipped++
-                        logger.info("dispoase: ${emitter.isDisposed}, $next")
+                        Thread.sleep(10)
                     }
 
                     if (skipped > 10) throw IllegalStateException("Something is wrong")
@@ -197,7 +198,6 @@ class SdkManager(private val sdkManager: File, private val logger: Logger) {
                 while (next != null) {
                     if (!emitter.isDisposed) emitter.onNext(next)
                     next = readUtf8Line()
-                    logger.info(next.toString())
                 }
                 if (!emitter.isDisposed) emitter.onComplete()
             } catch (error: Throwable) {

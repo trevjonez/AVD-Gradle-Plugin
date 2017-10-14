@@ -34,11 +34,6 @@ open class NamedConfigurationGroup(val name: String) {
         configure.call()
     }
 
-    var autoUpdate: Boolean = true
-    fun autoUpdate(value: Boolean) {
-        autoUpdate = value
-    }
-
     fun systemImageKey(): String {
         return "system-images;${avdConfig.api.cliValue};${avdConfig.type.cliValue};${avdConfig.abi.cpuArch}"
     }

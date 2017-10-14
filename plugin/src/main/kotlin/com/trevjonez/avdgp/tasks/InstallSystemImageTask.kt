@@ -19,27 +19,54 @@ package com.trevjonez.avdgp.tasks
 import com.android.sdklib.devices.Abi
 import com.trevjonez.avdgp.dsl.ApiLevel
 import com.trevjonez.avdgp.dsl.ApiType
-import com.trevjonez.avdgp.dsl.AvdExtension
 import org.gradle.api.DefaultTask
-import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.TaskAction
 import java.io.File
 
 open class InstallSystemImageTask : DefaultTask() {
 
-    @get:Input
     lateinit var sdkPath: File
-
-    @get:Input
     lateinit var abi: Abi
-
-    @get:Input
     lateinit var api: ApiLevel
-
-    @get:Input
     lateinit var type: ApiType
+    var acceptSdkLicense = false
+    var acceptSdkPreviewLicense = false
+    var autoUpdate = true
 
-    lateinit var configDsl: AvdExtension
+    private val imageDir: File
+        get() {
+            return File(sdkPath, "system-images" +
+                    File.separator + api.cliValue +
+                    File.separator + type.cliValue +
+                    File.separator + abi.cpuArch)
+        }
+
+    init {
+        outputs.upToDateWhen {
+            val manager = SdkManager(File(sdkPath, "tools${File.separator}bin${File.separator}sdkmanager"), logger)
+            val (obs, _) = manager.install(systemImageKey())
+
+            var error: Throwable? = null
+            var hasPendingUpdate = false
+
+            obs.doOnNext {
+                if (it is SdkManager.InstallStatus.AwaitingLicense) {
+                    hasPendingUpdate = true
+                }
+            }
+                    .takeUntil { it is SdkManager.InstallStatus.AwaitingLicense }
+                    .blockingSubscribe({ }, { error = it },
+                            { logger.info("Install Available Check Complete \"${systemImageKey()}\"") })
+
+            error?.let { throw it }
+
+            when {
+                !imageDir.exists() -> false
+                hasPendingUpdate && autoUpdate -> false
+                else -> true
+            }
+        }
+    }
 
     @TaskAction
     fun invoke() {
@@ -48,25 +75,26 @@ open class InstallSystemImageTask : DefaultTask() {
 
         var error: Throwable? = null
 
-        obs
-                .blockingSubscribe({ status ->
-                                       if (status is SdkManager.InstallStatus.AwaitingLicense) {
-                                           val isApproved = when (status.licenseType) {
-                                               SdkManager.LicenseType.Sdk -> configDsl.acceptAndroidSdkLicense
-                                               SdkManager.LicenseType.SdkPreview -> configDsl.acceptAndroidSdkPreviewLicense
-                                           }
-                                           if (isApproved) {
-                                               callback("Y")
-                                           } else {
-                                               throw IllegalStateException("Can not automatically accept license type: ${status.licenseType}. You must manually install or grant AVD plugin permission to auto agree")
-                                           }
-                                       }
-                                   }, { error = it }, { logger.info("Install Complete \"${systemImageKey()}\"") })
+        obs.blockingSubscribe({ status ->
+            if (status is SdkManager.InstallStatus.AwaitingLicense) {
+                val isApproved = when (status.licenseType) {
+                    SdkManager.LicenseType.Sdk -> acceptSdkLicense
+                    SdkManager.LicenseType.SdkPreview -> acceptSdkPreviewLicense
+                }
+                if (isApproved) {
+                    callback("Y")
+                } else {
+                    throw IllegalStateException(
+                            "Can not automatically accept license type: ${status.licenseType}. " +
+                                    "You must manually install or grant AVD plugin permission to auto agree")
+                }
+            }
+        }, { error = it }, { logger.info("Install Complete \"${systemImageKey()}\"") })
 
         error?.let { throw it }
     }
 
-    fun systemImageKey(): String {
+    private fun systemImageKey(): String {
         return "system-images;${api.cliValue};${type.cliValue};${abi.cpuArch}"
     }
 

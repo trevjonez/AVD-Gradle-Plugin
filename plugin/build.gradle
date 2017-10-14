@@ -51,7 +51,7 @@ test {
 }
 
 tasks.findByPath('test').dependsOn(':plugin:install')
-tasks.findByPath('test').dependsOn(':plugin:unzipSdkTools')
+tasks.findByPath('test').dependsOn(':plugin:updateTools')
 
 task sourcesJar(type: Jar, dependsOn: classes) {
     classifier 'sources'
@@ -97,4 +97,10 @@ task unzipSdkTools(type: Copy) {
     from zipTree(downloadSdkTools.dest)
     into file("$buildDir/Android/sdk/")
     dependsOn downloadSdkTools
+}
+
+task updateTools(type: Exec) {
+    workingDir file("$buildDir/Android/sdk/tools/bin")
+    commandLine 'bash', '-c', 'yes Y | ./sdkmanager tools'
+    dependsOn unzipSdkTools
 }
