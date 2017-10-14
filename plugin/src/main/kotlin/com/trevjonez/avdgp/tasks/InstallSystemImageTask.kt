@@ -24,7 +24,6 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.TaskAction
 import java.io.File
-import java.util.concurrent.TimeUnit
 
 open class InstallSystemImageTask : DefaultTask() {
 
@@ -50,8 +49,6 @@ open class InstallSystemImageTask : DefaultTask() {
         var error: Throwable? = null
 
         obs
-                .timeout(5, TimeUnit.SECONDS)
-                .doOnNext { logger.info(it.javaClass.simpleName) }
                 .blockingSubscribe({ status ->
                                        if (status is SdkManager.InstallStatus.AwaitingLicense) {
                                            val isApproved = when (status.licenseType) {
@@ -64,7 +61,7 @@ open class InstallSystemImageTask : DefaultTask() {
                                                throw IllegalStateException("Can not automatically accept license type: ${status.licenseType}. You must manually install or grant AVD plugin permission to auto agree")
                                            }
                                        }
-                                   }, { error = it }, { logger.info("Complete") })
+                                   }, { error = it }, { logger.info("Install Complete \"${systemImageKey()}\"") })
 
         error?.let { throw it }
     }

@@ -24,8 +24,8 @@ import org.gradle.api.logging.Logger
 import java.io.File
 import java.io.IOException
 import java.io.InputStream
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.TimeoutException
+
+private val licenseHeaderRegex = Regex("""License android-sdk-(preview-)?license:""")
 
 class SdkManager(private val sdkManager: File, private val logger: Logger) {
 
@@ -44,10 +44,9 @@ class SdkManager(private val sdkManager: File, private val logger: Logger) {
         }
     }
 
-    private val licenseHeaderRegex = Regex("""License android-sdk-(preview-)?license:""")
 
     fun install(sdkKey: String): Pair<Observable<InstallStatus>, (String) -> Unit> {
-        logger.info("Attempting install of $sdkKey with sdkmanager $sdkManager")
+        logger.info("Attempting install: $sdkManager \"$sdkKey\"")
         val process = ProcessBuilder(sdkManager.absolutePath, sdkKey).start()
         val outputWriter = process.outputStream.bufferedWriter()
 
@@ -63,10 +62,10 @@ class SdkManager(private val sdkManager: File, private val logger: Logger) {
                                         }
                                         .ofType(Line.Done::class.java)
                                         .map { it.value.trimEnd() }
-                                        .doOnNext { logger.info(it) },
+                                        .doOnNext { logger.info("stdOut: $it") },
                                 process.errorStream.toBufferedSource()
                                         .readLines()
-                                        .doOnNext(logger::info)
+                                        .doOnNext { logger.info("stdErr: $it") }
                                         .subscribeOn(Schedulers.io())
                                         .doOnNext { if (it.contains("Failed to find package")) throw Error.PackageNotFound(sdkKey) }
                                         .doOnNext { if (it.contains("Failed to create SDK root dir")) throw Error.Unknown(it) }
@@ -80,20 +79,21 @@ class SdkManager(private val sdkManager: File, private val logger: Logger) {
 
                     if (last is InstallStatus.PrintingLicense && next.contains("Accept? (y/N):")) {
                         InstallStatus.AwaitingLicense(next, last.licenseType)
-                    } else if (last is InstallStatus.AwaitingLicense) {
-                        InstallStatus.InFlight(next)
                     } else if (next.matches(licenseHeaderRegex)) {
                         InstallStatus.PrintingLicense(next)
+                    } else if (next == "done") {
+                        InstallStatus.Done
                     } else {
                         last.collect(next)
                     }
                 }
+                .takeUntil { it is InstallStatus.Done }
                 .doOnDispose {
                     outputWriter.close()
                     process.destroy()
                 }
                 .to({ input: String ->
-                        logger.info("received callback with: $input")
+                        logger.info("stdIn: $input")
                         outputWriter.apply {
                             write(input); newLine(); flush()
                         }
@@ -119,7 +119,20 @@ class SdkManager(private val sdkManager: File, private val logger: Logger) {
 
         data class AwaitingLicense(override val stdOut: String, val licenseType: LicenseType) : InstallStatus() {
             override fun collect(nextLine: String): InstallStatus {
-                throw UnsupportedOperationException("Don't collect on awaiting license")
+                return if (nextLine.matches(licenseHeaderRegex)) {
+                    PrintingLicense(nextLine)
+                } else {
+                    InFlight(nextLine)
+                }
+            }
+        }
+
+        object Done : InstallStatus() {
+            override val stdOut: String
+                get() = "done"
+
+            override fun collect(nextLine: String): InstallStatus {
+                throw UnsupportedOperationException("Nothing to collect when done")
             }
         }
     }
@@ -137,10 +150,11 @@ class SdkManager(private val sdkManager: File, private val logger: Logger) {
         data class Done(override val value: String) : Line()
 
         companion object {
-
             fun make(last: String, next: Char): Line {
-                return if (next == '\n' || last.contains("Accept? (y/N):")) Done(last)
-                else Pending(last + next)
+                val line = last + next
+                return if (line == "done") Done(line)
+                else if (next == '\n' || last.contains("Accept? (y/N):")) Done(last)
+                else Pending(line)
             }
         }
     }
@@ -152,6 +166,7 @@ class SdkManager(private val sdkManager: File, private val logger: Logger) {
     fun BufferedSource.drain(): Observable<Char> {
         return Observable.create { emitter ->
             try {
+                var skipped = 0
                 while (true) {
                     val next = try {
                         readByte().toChar()
@@ -161,7 +176,13 @@ class SdkManager(private val sdkManager: File, private val logger: Logger) {
 
                     if (!emitter.isDisposed && next != null) {
                         emitter.onNext(next)
+                    } else {
+                        skipped++
+                        logger.info("dispoase: ${emitter.isDisposed}, $next")
                     }
+
+                    if (skipped > 10) throw IllegalStateException("Something is wrong")
+                    if (emitter.isDisposed) break
                 }
             } catch (error: Throwable) {
                 if (!emitter.isDisposed) emitter.onError(error)

@@ -310,6 +310,7 @@ class PluginTest {
                             }
                         }
                         acceptAndroidSdkLicense true
+                        acceptAndroidSdkPreviewLicense true
                     }
                 """.trimIndent()
                 childFile("build.gradle").writeText(buildFile)
@@ -319,7 +320,7 @@ class PluginTest {
         val buildResult = GradleRunner.create()
                 .withProjectDir(projectDir)
                 .withDebug(true)
-                .withArguments("installSystemImage_api26_GoogleApis_x86", "--stacktrace", "--info")
+                .withArguments("installSystemImage_api26_GoogleApis_x86")
                 .forwardOutput()
                 .build()
     }
