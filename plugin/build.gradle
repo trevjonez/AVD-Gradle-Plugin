@@ -88,7 +88,7 @@ install {
 import de.undercouch.gradle.tasks.download.Download
 
 task downloadSdkTools(type: Download) {
-    src "https://dl.google.com/android/repository/sdk-tools-darwin-3859397.zip"
+    src "https://dl.google.com/android/repository/sdk-tools-darwin-4333796.zip"
     dest file("$buildDir/sdk-tools.zip")
     onlyIfModified true
 }

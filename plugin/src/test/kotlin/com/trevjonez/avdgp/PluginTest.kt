@@ -400,14 +400,16 @@ class PluginTest {
         }
 
 
-        GradleRunner.create()
+        var buildResult = GradleRunner.create()
                 .withProjectDir(projectDir)
                 .withDebug(true)
                 .withArguments("installSystemImage_api26_GoogleApis_x86", "--stacktrace", "--info")
                 .forwardOutput()
                 .build()
 
-        val buildResult = GradleRunner.create()
+        assertThat(buildResult.task(":installSystemImage_api26_GoogleApis_x86")?.outcome).isEqualTo(SUCCESS)
+
+        buildResult = GradleRunner.create()
                 .withProjectDir(projectDir)
                 .withDebug(true)
                 .withArguments("installSystemImage_api26_GoogleApis_x86", "--stacktrace", "--info")

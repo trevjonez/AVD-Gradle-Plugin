@@ -51,27 +51,28 @@ class SdkManager(private val sdkManager: File, private val logger: Logger) {
         val outputWriter = process.outputStream.bufferedWriter()
 
         return Observable.merge(process.inputStream.toBufferedSource()
-                                        .drain()
-                                        .subscribeOn(Schedulers.io())
-                                        .scan<Line>(Line.Pending("")) { last, next ->
-                                            if (last is Line.Done) {
-                                                Line.make("", next)
-                                            } else {
-                                                Line.make(last.value, next)
-                                            }
-                                        }
-                                        .ofType(Line.Done::class.java)
-                                        .map { it.value.trimEnd() }
-                                        .doOnNext { logger.info("stdOut: $it") },
-                                process.errorStream.toBufferedSource()
-                                        .readLines()
-                                        .doOnNext { logger.info("stdErr: $it") }
-                                        .subscribeOn(Schedulers.io())
-                                        .doOnNext { if (it.contains("Failed to find package")) throw Error.PackageNotFound(sdkKey) }
-                                        .doOnNext { if (it.contains("Failed to create SDK root dir")) throw Error.Unknown(it) }
-                                        .never(),
-                                process.completionObservable<String>()
-                                        .subscribeOn(Schedulers.io()))
+                .drain()
+                .subscribeOn(Schedulers.io())
+                .scan<Line>(Line.Pending("")) { last, next ->
+                    if (last is Line.Done) {
+                        Line.make("", next)
+                    } else {
+                        Line.make(last.value, next)
+                    }
+                }
+                .ofType(Line.Done::class.java)
+                .map { it.value.trimEnd() }
+                .distinctUntilChanged()
+                .doOnNext { logger.info("stdOut: $it") },
+                process.errorStream.toBufferedSource()
+                        .readLines()
+                        .doOnNext { logger.info("stdErr: $it") }
+                        .subscribeOn(Schedulers.io())
+                        .doOnNext { if (it.contains("Failed to find package")) throw Error.PackageNotFound(sdkKey) }
+                        .doOnNext { if (it.contains("Failed to create SDK root dir")) throw Error.Unknown(it) }
+                        .never(),
+                process.completionObservable<String>()
+                        .subscribeOn(Schedulers.io()))
                 .scan<InstallStatus>(InstallStatus.InFlight("")) { last, next ->
                     if (next.contains("Usage: ")) {
                         throw Error.InvalidInvocation()
@@ -87,18 +88,19 @@ class SdkManager(private val sdkManager: File, private val logger: Logger) {
                         last.collect(next)
                     }
                 }
+//                .doOnNext { logger.info(it.toString()) }
                 .takeUntil { it is InstallStatus.Done }
                 .doOnDispose {
                     outputWriter.close()
                     process.destroy()
                 }
                 .to({ input: String ->
-                        logger.info("stdIn: $input")
-                        outputWriter.apply {
-                            write(input); newLine(); flush()
-                        }
-                        Unit
-                    })
+                    logger.info("stdIn: $input")
+                    outputWriter.apply {
+                        write(input); newLine(); flush()
+                    }
+                    Unit
+                })
     }
 
     sealed class InstallStatus {
@@ -153,7 +155,7 @@ class SdkManager(private val sdkManager: File, private val logger: Logger) {
             fun make(last: String, next: Char): Line {
                 val line = last + next
                 return if (line == "done") Done(line)
-                else if (next == '\n' || last.contains("Accept? (y/N):")) Done(last)
+                else if (next == '\n' || next == '\r' || last.contains("Accept? (y/N):")) Done(last)
                 else Pending(line)
             }
         }
@@ -177,14 +179,14 @@ class SdkManager(private val sdkManager: File, private val logger: Logger) {
                     if (!emitter.isDisposed && next != null) {
                         emitter.onNext(next)
                     } else {
-                        logger.info("disposed: ${emitter.isDisposed}, next: '$next'")
                         skipped++
-                        Thread.sleep(10)
                     }
 
-                    if (skipped > 10) throw IllegalStateException("Something is wrong")
+                    if (skipped > 10) break
                     if (emitter.isDisposed) break
                 }
+
+                if(!emitter.isDisposed) emitter.onComplete()
             } catch (error: Throwable) {
                 if (!emitter.isDisposed) emitter.onError(error)
             }
