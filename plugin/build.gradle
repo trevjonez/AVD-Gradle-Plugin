@@ -36,6 +36,7 @@ dependencies {
     compile group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib', version: kotlin_version
     compile group: 'com.android.tools.build', name: 'gradle', version: android_plugin_version
     compile group: 'io.reactivex.rxjava2', name: 'rxjava', version: '2.1.5'
+    compile group: 'com.squareup.okio', name: 'okio', version: '1.13.0'
 
     testCompile group: 'junit', name: 'junit', version: '4.12'
     testCompile group: 'org.assertj', name: 'assertj-core', version: '3.8.0'
@@ -46,6 +47,7 @@ test {
     testLogging.exceptionFormat = 'full'
     systemProperty("avd_plugin_version", version)
     systemProperty("sdkToolsPath", "$buildDir/Android/sdk/tools/")
+    outputs.upToDateWhen { false }
 }
 
 tasks.findByPath('test').dependsOn(':plugin:install')

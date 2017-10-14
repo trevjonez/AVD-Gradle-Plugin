@@ -51,17 +51,18 @@ class AvdPlugin : Plugin<Project> {
                                 type = InstallSystemImageTask::class,
                                 name = config.installTaskName(),
                                 description = "Install/Update system image").apply {
-                            sdkPath = File(lookupSdkPath())
+                            sdkPath = File(lookupSdkPath(project))
                             api = config.avdConfig.api
                             abi = config.avdConfig.abi
                             type = config.avdConfig.type
+                            configDsl = extension
                         }
                     }
         }
     }
 
-    private fun lookupSdkPath(): String {
-        val localPropFile = File("local.properties")
+    private fun lookupSdkPath(project: Project): String {
+        val localPropFile = File(project.projectDir, "local.properties")
         if (localPropFile.exists()) {
 
             val localProperties = Properties().apply {
@@ -72,6 +73,8 @@ class AvdPlugin : Plugin<Project> {
                 logger.info("Using sdk.dir path for avd plugin: $sdkDir")
                 return sdkDir
             }
+        } else {
+            logger.info("local.properties doesn't exist at ${localPropFile.absolutePath}")
         }
 
         val androidHome = System.getenv("ANDROID_HOME")

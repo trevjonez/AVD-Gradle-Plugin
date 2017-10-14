@@ -24,6 +24,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 import java.io.File
+import java.util.concurrent.TimeUnit
 
 @RunWith(JUnit4::class)
 class PluginTest {
@@ -137,7 +138,7 @@ class PluginTest {
     }
 
     @Test
-    fun installSdkTaskDoesntExplode() {
+    fun packageNotFoundThrowsException() {
 
         var projectDir: File? = null
         var sdkDir: File? = null
@@ -146,6 +147,12 @@ class PluginTest {
                 sdkDir = childDirectory("sdk") {
                     File(System.getProperty("sdkToolsPath"))
                             .copyRecursively(childFile("tools"))
+                    childDirectory("tools") {
+                        childDirectory("bin") {
+                            ProcessBuilder("chmod", "+x", childFile("sdkmanager").absolutePath).start().waitFor(2, TimeUnit.SECONDS)
+                            ProcessBuilder("chmod", "+x", childFile("avdmanager").absolutePath).start().waitFor(2, TimeUnit.SECONDS)
+                        }
+                    }
                 }
             }
 
@@ -185,9 +192,136 @@ class PluginTest {
                 .withDebug(true)
                 .withArguments("installSystemImage_api26_GoogleApis_x86_64", "--stacktrace", "--info")
                 .forwardOutput()
-                .build()
+                .buildAndFail()
 
-        println(buildResult.output)
+        assertThat(buildResult.output).contains("""
+            * What went wrong:
+            Execution failed for task ':installSystemImage_api26_GoogleApis_x86_64'.
+            > Failed to find package system-images;android-26;google_apis;x86_64
+        """.trimIndent())
+    }
+
+    @Test
+    fun failToGrantPermissionFailsBuild() {
+        var projectDir: File? = null
+        var sdkDir: File? = null
+        testDir.file.apply {
+            childDirectory("Android") {
+                sdkDir = childDirectory("sdk") {
+                    File(System.getProperty("sdkToolsPath"))
+                            .copyRecursively(childFile("tools"))
+                    childDirectory("tools") {
+                        childDirectory("bin") {
+                            ProcessBuilder("chmod", "+x", childFile("sdkmanager").absolutePath).start().waitFor(2, TimeUnit.SECONDS)
+                            ProcessBuilder("chmod", "+x", childFile("avdmanager").absolutePath).start().waitFor(2, TimeUnit.SECONDS)
+                        }
+                    }
+                }
+            }
+
+            projectDir = childDirectory("sampleProject") {
+                childFile("local.properties").writeText("sdk.dir=${sdkDir?.absolutePath}")
+                @Language("Groovy")
+                val buildFile = """
+                    buildscript {
+                        repositories {
+                            google()
+                            jcenter()
+                            mavenLocal()
+                        }
+                        dependencies {
+                            classpath "com.github.trevjonez:AVD-Gradle-Plugin:${System.getProperty("avd_plugin_version")}"
+                        }
+                    }
+                    apply plugin: 'AVD'
+
+                    AVD.configs {
+                        "Nexus 5x API O" {
+                            avd {
+                                abi "x86"
+                                api 26
+                                type "google_apis"
+                                deviceId "Nexus 5X"
+                            }
+                        }
+                    }
+                """.trimIndent()
+                childFile("build.gradle").writeText(buildFile)
+            }
+        }
+
+        val buildResult = GradleRunner.create()
+                .withProjectDir(projectDir)
+                .withDebug(true)
+                .withArguments("installSystemImage_api26_GoogleApis_x86", "--stacktrace", "--info")
+                .forwardOutput()
+                .buildAndFail()
+
+        assertThat(buildResult.output).contains("""
+            * What went wrong:
+            Execution failed for task ':installSystemImage_api26_GoogleApis_x86'.
+            > Can not automatically accept license type: Sdk. You must manually install or grant AVD plugin permission to auto agree
+        """.trimIndent())
+    }
+
+    @Test
+    fun installTaskSucceeds() {
+        var projectDir: File? = null
+        var sdkDir: File? = null
+        testDir.file.apply {
+            childDirectory("Android") {
+                sdkDir = childDirectory("sdk") {
+                    File(System.getProperty("sdkToolsPath"))
+                            .copyRecursively(childFile("tools"))
+                    childDirectory("tools") {
+                        childDirectory("bin") {
+                            ProcessBuilder("chmod", "+x", childFile("sdkmanager").absolutePath).start().waitFor(2, TimeUnit.SECONDS)
+                            ProcessBuilder("chmod", "+x", childFile("avdmanager").absolutePath).start().waitFor(2, TimeUnit.SECONDS)
+                        }
+                    }
+                }
+            }
+
+            projectDir = childDirectory("sampleProject") {
+                childFile("local.properties").writeText("sdk.dir=${sdkDir?.absolutePath}")
+                @Language("Groovy")
+                val buildFile = """
+                    buildscript {
+                        repositories {
+                            google()
+                            jcenter()
+                            mavenLocal()
+                        }
+                        dependencies {
+                            classpath "com.github.trevjonez:AVD-Gradle-Plugin:${System.getProperty("avd_plugin_version")}"
+                        }
+                    }
+                    apply plugin: 'AVD'
+
+                    AVD {
+                        configs {
+                            "Nexus 5x API O" {
+                                avd {
+                                    abi "x86"
+                                    api 26
+                                    type "google_apis"
+                                    deviceId "Nexus 5X"
+                                }
+                            }
+                        }
+                        acceptAndroidSdkLicense true
+                    }
+                """.trimIndent()
+                childFile("build.gradle").writeText(buildFile)
+            }
+        }
+
+        val buildResult = GradleRunner.create()
+                .withProjectDir(projectDir)
+                .withDebug(true)
+                .withArguments("installSystemImage_api26_GoogleApis_x86", "--stacktrace", "--info")
+                .forwardOutput()
+                .build()
     }
 
     private fun File.childDirectory(dirName: String, block: File.() -> Unit = {}): File {
