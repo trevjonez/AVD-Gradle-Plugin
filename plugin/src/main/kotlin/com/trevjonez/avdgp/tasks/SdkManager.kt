@@ -28,6 +28,7 @@ import java.io.InputStream
 
 private val licenseHeaderRegex = Regex("""License android-sdk-(preview-)?license:""")
 
+//TODO manually do download and install rather than using the cli tool? might be able to get some parallelization speedup
 class SdkManager(private val sdkManager: File,
                  private val logger: Logger,
                  private val proxyConfig: ProxyConfig?,
