@@ -33,8 +33,6 @@ class PluginTest {
     @get:Rule
     val testDir = BuildDirFolder("PluginTest")
 
-    val localSquidProxyIp = "192.168.0.21"
-
     @Test
     @UseTemporaryFolder
     fun `check task creation`() {
@@ -336,10 +334,16 @@ class PluginTest {
                         acceptAndroidSdkLicense true
                         acceptAndroidSdkPreviewLicense true
 
+                ${
+                if (System.getProperty("useProxy") == "true") {
+                    """
                         proxyType "http"
-                        proxyHost "$localSquidProxyIp"
-                        proxyPort 3128
+                        proxyHost "${System.getProperty("proxyIp")}"
+                        proxyPort ${System.getProperty("proxyPort")}
                         noHttps true
+                    """.trimIndent()
+                } else ""
+                }
                     }
                 """.trimIndent()
                 childFile("build.gradle").writeText(buildFile)
@@ -406,11 +410,16 @@ class PluginTest {
                         }
                         acceptAndroidSdkLicense true
                         acceptAndroidSdkPreviewLicense true
-
+                ${
+                if (System.getProperty("useProxy") == "true") {
+                    """
                         proxyType "http"
-                        proxyHost "$localSquidProxyIp"
-                        proxyPort 3128
+                        proxyHost "${System.getProperty("proxyIp")}"
+                        proxyPort ${System.getProperty("proxyPort")}
                         noHttps true
+                    """.trimIndent()
+                } else ""
+                }
                     }
                 """.trimIndent()
                 childFile("build.gradle").writeText(buildFile)

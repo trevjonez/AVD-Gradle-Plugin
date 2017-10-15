@@ -42,12 +42,22 @@ dependencies {
     testCompile group: 'org.assertj', name: 'assertj-core', version: '3.8.0'
 }
 
+Properties localProperties = new Properties()
+File localPropFile = new File(project.projectDir, "local.properties")
+if (localPropFile.exists())
+    localProperties.load(new FileInputStream(localPropFile))
+
 test {
     testLogging.showStandardStreams = true
     testLogging.exceptionFormat = 'full'
     systemProperty("avd_plugin_version", version)
     systemProperty("sdkToolsPath", "$buildDir/Android/sdk/tools/")
-    outputs.upToDateWhen { false }
+    if (localProperties.getProperty("useProxy", "false") == "true") {
+        systemProperty("useProxy", "true")
+        systemProperty("proxyIp", localProperties.getProperty("proxyIp", "localhost"))
+        systemProperty("proxyPort", localProperties.getProperty("proxyPort", "3128"))
+    }
+        outputs.upToDateWhen { false }
 }
 
 tasks.findByPath('test').dependsOn(':plugin:install')
