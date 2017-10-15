@@ -3,9 +3,20 @@ Gradle plugin to assist in managing android virtual devices
 
 ```groovy
 AVD {
+    //By default the install task(s) up to date check will run `sdkmanager` to see if an update is available
+    //If disabled this will only check if the system image dir is present
     autoUpdate false //default true (optional)
+    
     acceptAndroidSdkLicense true //default false (required)
     acceptAndroidSdkPreviewLicense true //default false (required)
+    
+    //Note: if any proxy settings are specified all must be present
+    proxyType "http" //default null (optional)
+    proxyHost "localhost" //default null (optional)
+    proxyPort 8080 //default null (optional)
+    
+    noHttps true //default false (optional)
+    
     configs {
         tablet_25 {
             avd {

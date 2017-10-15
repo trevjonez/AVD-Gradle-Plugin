@@ -3,5 +3,6 @@ build/
 
 .idea
 !.idea/copyright
+!.idea/codeStyles
 *.iml
 local.properties

@@ -19,6 +19,7 @@ package com.trevjonez.avdgp.tasks
 import com.android.sdklib.devices.Abi
 import com.trevjonez.avdgp.dsl.ApiLevel
 import com.trevjonez.avdgp.dsl.ApiType
+import com.trevjonez.avdgp.dsl.ProxyConfig
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.TaskAction
 import java.io.File
@@ -32,6 +33,8 @@ open class InstallSystemImageTask : DefaultTask() {
     var acceptSdkLicense = false
     var acceptSdkPreviewLicense = false
     var autoUpdate = true
+    var proxyConfig: ProxyConfig? = null
+    var noHttps = false
 
     private val imageDir: File
         get() {
@@ -41,9 +44,10 @@ open class InstallSystemImageTask : DefaultTask() {
                     File.separator + abi.cpuArch)
         }
 
+    private val manager by lazy { SdkManager(File(sdkPath, "tools${File.separator}bin${File.separator}sdkmanager"), logger, proxyConfig, noHttps) }
+
     init {
         outputs.upToDateWhen {
-            val manager = SdkManager(File(sdkPath, "tools${File.separator}bin${File.separator}sdkmanager"), logger)
             val (obs, _) = manager.install(systemImageKey())
 
             var error: Throwable? = null
@@ -70,7 +74,6 @@ open class InstallSystemImageTask : DefaultTask() {
 
     @TaskAction
     fun invoke() {
-        val manager = SdkManager(File(sdkPath, "tools${File.separator}bin${File.separator}sdkmanager"), logger)
         val (obs, consoleInput) = manager.install(systemImageKey())
 
         var error: Throwable? = null

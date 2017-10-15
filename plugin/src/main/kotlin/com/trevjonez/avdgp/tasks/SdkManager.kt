@@ -16,18 +16,22 @@
 
 package com.trevjonez.avdgp.tasks
 
+import com.trevjonez.avdgp.dsl.ProxyConfig
 import io.reactivex.Observable
 import io.reactivex.schedulers.Schedulers
 import okio.BufferedSource
 import okio.Okio
-import org.gradle.api.logging.Logger
+import org.slf4j.Logger
 import java.io.File
 import java.io.IOException
 import java.io.InputStream
 
 private val licenseHeaderRegex = Regex("""License android-sdk-(preview-)?license:""")
 
-class SdkManager(private val sdkManager: File, private val logger: Logger) {
+class SdkManager(private val sdkManager: File,
+                 private val logger: Logger,
+                 private val proxyConfig: ProxyConfig?,
+                 private val noHttps: Boolean) {
 
     enum class LicenseType {
         Sdk, SdkPreview;
@@ -46,24 +50,41 @@ class SdkManager(private val sdkManager: File, private val logger: Logger) {
 
 
     fun install(sdkKey: String): Pair<Observable<InstallStatus>, (String) -> Unit> {
-        logger.info("Attempting install: $sdkManager \"$sdkKey\"")
-        val process = ProcessBuilder(sdkManager.absolutePath, sdkKey).start()
+        val args = mutableListOf<String>()
+        if (proxyConfig != null) {
+            args.add("--proxy=${proxyConfig.type}")
+            args.add("--proxy_host=${proxyConfig.host}")
+            args.add("--proxy_port=${proxyConfig.port}")
+        }
+
+        if (noHttps) {
+            args.add("--no_https")
+        }
+
+        args.add(sdkKey)
+
+        val processBuilder = ProcessBuilder(sdkManager.absolutePath, *args.toTypedArray())
+        logger.info("Attempting install: ${processBuilder.command().joinToString(separator = " ")}")
+
+        val process = processBuilder.start()
         val outputWriter = process.outputStream.bufferedWriter()
 
-        return Observable.merge(process.inputStream.toBufferedSource()
-                .drain()
-                .subscribeOn(Schedulers.io())
-                .scan<Line>(Line.Pending("")) { last, next ->
-                    if (last is Line.Done) {
-                        Line.make("", next)
-                    } else {
-                        Line.make(last.value, next)
-                    }
-                }
-                .ofType(Line.Done::class.java)
-                .map { it.value.trimEnd() }
-                .distinctUntilChanged()
-                .doOnNext { logger.info("stdOut: $it") },
+        return Observable.merge(
+                process.inputStream.toBufferedSource()
+                        .drain()
+                        .subscribeOn(Schedulers.io())
+                        .scan<Line>(Line.Pending("")) { last, next ->
+                            if (last is Line.Done) {
+                                Line.make("", next)
+                            } else {
+                                Line.make(last.value, next)
+                            }
+                        }
+                        .ofType(Line.Done::class.java)
+                        .map { it.value.trimEnd() }
+                        .distinctUntilChanged()
+                        .doOnNext { logger.info("stdOut: $it") },
+
                 process.errorStream.toBufferedSource()
                         .readLines()
                         .doOnNext { logger.error("stdErr: $it") }
@@ -71,6 +92,7 @@ class SdkManager(private val sdkManager: File, private val logger: Logger) {
                         .doOnNext { if (it.contains("Failed to find package")) throw Error.PackageNotFound(sdkKey) }
                         .doOnNext { if (it.contains("Failed to create SDK root dir")) throw Error.Unknown(it) }
                         .never(),
+
                 process.completionObservable<String>()
                         .subscribeOn(Schedulers.io()))
                 .scan<InstallStatus>(InstallStatus.InFlight("")) { last, next ->
@@ -158,7 +180,7 @@ class SdkManager(private val sdkManager: File, private val logger: Logger) {
                     if (emitter.isDisposed) break
                 }
 
-                if(!emitter.isDisposed) emitter.onComplete()
+                if (!emitter.isDisposed) emitter.onComplete()
             } catch (error: Throwable) {
                 if (!emitter.isDisposed) emitter.onError(error)
             }

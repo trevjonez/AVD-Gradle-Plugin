@@ -49,4 +49,24 @@ open class AvdExtension(project: Project) {
     fun autoUpdate(value: Boolean) {
         autoUpdate = value
     }
+
+    var proxyType: String? = null
+    fun proxyType(value: String?) {
+        proxyType = value
+    }
+
+    var proxyHost: String? = null
+    fun proxyHost(value: String?) {
+        proxyHost = value
+    }
+
+    var proxyPort: Int? = null
+    fun proxyPort(value: Int?) {
+        proxyPort = value
+    }
+
+    var noHttps: Boolean = false
+    fun noHttps(value: Boolean) {
+        noHttps = value
+    }
 }

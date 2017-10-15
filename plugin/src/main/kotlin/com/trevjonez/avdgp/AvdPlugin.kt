@@ -18,6 +18,7 @@ package com.trevjonez.avdgp
 
 import com.trevjonez.avdgp.dsl.AvdExtension
 import com.trevjonez.avdgp.dsl.NamedConfigurationGroup
+import com.trevjonez.avdgp.dsl.ProxyConfig
 import com.trevjonez.avdgp.tasks.InstallSystemImageTask
 import org.gradle.api.DefaultTask
 import org.gradle.api.Plugin
@@ -26,6 +27,13 @@ import org.gradle.api.Task
 import org.gradle.api.logging.Logger
 import java.io.File
 import java.util.Properties
+import kotlin.collections.LinkedHashMap
+import kotlin.collections.List
+import kotlin.collections.component1
+import kotlin.collections.component2
+import kotlin.collections.fold
+import kotlin.collections.forEach
+import kotlin.collections.mutableMapOf
 import kotlin.reflect.KClass
 
 class AvdPlugin : Plugin<Project> {
@@ -42,6 +50,11 @@ class AvdPlugin : Plugin<Project> {
 
         logger = project.logger
         project.afterEvaluate {
+            val proxy = if(extension.proxyHost != null || extension.proxyPort != null || extension.proxyType != null) {
+                ProxyConfig.checkParams(extension.proxyType, extension.proxyHost, extension.proxyPort)
+                ProxyConfig(extension.proxyType!!, extension.proxyHost!!, extension.proxyPort!!)
+            } else null
+
             extension.configs
                     .fold(mutableMapOf<String, NamedConfigurationGroup>()) { set, config ->
                         set.apply { put(config.systemImageKey(), config) }
@@ -58,6 +71,8 @@ class AvdPlugin : Plugin<Project> {
                             acceptSdkLicense = extension.acceptAndroidSdkLicense
                             acceptSdkPreviewLicense = extension.acceptAndroidSdkPreviewLicense
                             autoUpdate = extension.autoUpdate
+                            proxyConfig = proxy
+                            noHttps = extension.noHttps
                         }
                     }
         }
