@@ -66,7 +66,7 @@ class SdkManager(private val sdkManager: File, private val logger: Logger) {
                 .doOnNext { logger.info("stdOut: $it") },
                 process.errorStream.toBufferedSource()
                         .readLines()
-                        .doOnNext { logger.info("stdErr: $it") }
+                        .doOnNext { logger.error("stdErr: $it") }
                         .subscribeOn(Schedulers.io())
                         .doOnNext { if (it.contains("Failed to find package")) throw Error.PackageNotFound(sdkKey) }
                         .doOnNext { if (it.contains("Failed to create SDK root dir")) throw Error.Unknown(it) }
@@ -81,15 +81,13 @@ class SdkManager(private val sdkManager: File, private val logger: Logger) {
                     if (last is InstallStatus.PrintingLicense && next.contains("Accept? (y/N):")) {
                         InstallStatus.AwaitingLicense(next, last.licenseType)
                     } else if (next.matches(licenseHeaderRegex)) {
-                        InstallStatus.PrintingLicense(next)
-                    } else if (next == "done") {
-                        InstallStatus.Done
+                        InstallStatus.PrintingLicense(next, LicenseType.fromStdOut(next))
+                    } else if (last is InstallStatus.PrintingLicense) {
+                        InstallStatus.PrintingLicense(next, last.licenseType)
                     } else {
-                        last.collect(next)
+                        InstallStatus.InFlight(next)
                     }
                 }
-//                .doOnNext { logger.info(it.toString()) }
-                .takeUntil { it is InstallStatus.Done }
                 .doOnDispose {
                     outputWriter.close()
                     process.destroy()
@@ -105,38 +103,12 @@ class SdkManager(private val sdkManager: File, private val logger: Logger) {
 
     sealed class InstallStatus {
         abstract val stdOut: String
-        abstract fun collect(nextLine: String): InstallStatus
 
-        data class InFlight(override val stdOut: String) : InstallStatus() {
-            override fun collect(nextLine: String)
-                    = copy(stdOut = "$stdOut\n$nextLine")
-        }
+        data class InFlight(override val stdOut: String) : InstallStatus()
 
-        data class PrintingLicense(override val stdOut: String) : InstallStatus() {
-            override fun collect(nextLine: String)
-                    = copy(stdOut = "$stdOut\n$nextLine")
+        data class PrintingLicense(override val stdOut: String, val licenseType: LicenseType) : InstallStatus()
 
-            val licenseType = LicenseType.fromStdOut(stdOut)
-        }
-
-        data class AwaitingLicense(override val stdOut: String, val licenseType: LicenseType) : InstallStatus() {
-            override fun collect(nextLine: String): InstallStatus {
-                return if (nextLine.matches(licenseHeaderRegex)) {
-                    PrintingLicense(nextLine)
-                } else {
-                    InFlight(nextLine)
-                }
-            }
-        }
-
-        object Done : InstallStatus() {
-            override val stdOut: String
-                get() = "done"
-
-            override fun collect(nextLine: String): InstallStatus {
-                throw UnsupportedOperationException("Nothing to collect when done")
-            }
-        }
+        data class AwaitingLicense(override val stdOut: String, val licenseType: LicenseType) : InstallStatus()
     }
 
     sealed class Error(message: String, cause: Throwable? = null) : RuntimeException(message, cause) {

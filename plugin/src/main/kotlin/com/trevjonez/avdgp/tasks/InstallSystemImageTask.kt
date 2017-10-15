@@ -71,7 +71,7 @@ open class InstallSystemImageTask : DefaultTask() {
     @TaskAction
     fun invoke() {
         val manager = SdkManager(File(sdkPath, "tools${File.separator}bin${File.separator}sdkmanager"), logger)
-        val (obs, callback) = manager.install(systemImageKey())
+        val (obs, consoleInput) = manager.install(systemImageKey())
 
         var error: Throwable? = null
 
@@ -82,7 +82,7 @@ open class InstallSystemImageTask : DefaultTask() {
                     SdkManager.LicenseType.SdkPreview -> acceptSdkPreviewLicense
                 }
                 if (isApproved) {
-                    callback("Y")
+                    consoleInput("Y")
                 } else {
                     throw IllegalStateException(
                             "Can not automatically accept license type: ${status.licenseType}. " +

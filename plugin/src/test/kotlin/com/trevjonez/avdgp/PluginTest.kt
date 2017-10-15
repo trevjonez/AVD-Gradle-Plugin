@@ -37,7 +37,7 @@ class PluginTest {
 
     @Test
     @UseTemporaryFolder
-    fun testForBasicTaskCreation() {
+    fun `check task creation`() {
         var projectDir: File? = null
         var sdkDir: File? = null
         testDir.root.apply {
@@ -81,7 +81,7 @@ class PluginTest {
 
         val buildResult = GradleRunner.create()
                 .withProjectDir(projectDir)
-                .withArguments("tasks", "--stacktrace")
+                .withArguments("tasks", "--stacktrace", "--info")
                 .withDebug(true)
                 .forwardOutput()
                 .build()
@@ -92,7 +92,7 @@ class PluginTest {
 
     @Test
     @UseTemporaryFolder
-    fun illegalAvdNameShouldFailConfigurationPhase() {
+    fun `illegal avd name should fail configuration phase`() {
 
         var projectDir: File? = null
         var sdkDir: File? = null
@@ -147,7 +147,7 @@ class PluginTest {
 
     @Test
     @UseTemporaryFolder
-    fun packageNotFoundThrowsException() {
+    fun `package not found throws exception`() {
 
         var projectDir: File? = null
         var sdkDir: File? = null
@@ -213,7 +213,7 @@ class PluginTest {
 
     @Test
     @UseTemporaryFolder
-    fun failToGrantPermissionFailsBuild() {
+    fun `missing grant permission fails build`() {
         var projectDir: File? = null
         var sdkDir: File? = null
         testDir.root.apply {
@@ -279,7 +279,7 @@ class PluginTest {
 
     @Test
     @UseTemporaryFolder
-    fun installTaskSucceeds() {
+    fun `install task completes successfully`() {
         var projectDir: File? = null
         var sdkDir: File? = null
         testDir.root.apply {
@@ -345,7 +345,7 @@ class PluginTest {
 
     @Test
     @UseTemporaryFolder
-    fun installTaskIsSuperTurboUltraFastIfImageIsAlreadyInstalled() {
+    fun `install task is up to date on second invocation`() {
         var projectDir: File? = null
         var sdkDir: File? = null
         testDir.root.apply {
