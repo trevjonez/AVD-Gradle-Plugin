@@ -19,83 +19,59 @@ package com.trevjonez.avdgp.tasks
 import com.trevjonez.avdgp.dsl.ProxyConfig
 import io.reactivex.Observable
 import io.reactivex.schedulers.Schedulers
-import okio.BufferedSource
-import okio.Okio
+import io.reactivex.subjects.PublishSubject
 import org.slf4j.Logger
 import java.io.File
-import java.io.IOException
-import java.io.InputStream
 
-private val licenseHeaderRegex = Regex("""License android-sdk-(preview-)?license:""")
-
-//TODO manually do download and install rather than using the cli tool? might be able to get some parallelization speedup
 class SdkManager(private val sdkManager: File,
                  private val logger: Logger,
                  private val proxyConfig: ProxyConfig?,
                  private val noHttps: Boolean) {
 
-    enum class LicenseType {
-        Sdk, SdkPreview;
-
-        companion object {
-            @JvmStatic
-            fun fromStdOut(stdOut: String): LicenseType {
-                return when {
-                    stdOut.contains("License android-sdk-license:") -> Sdk
-                    stdOut.contains("License android-sdk-preview-license:") -> SdkPreview
-                    else -> throw IllegalArgumentException("No matching stdOut title:\n $stdOut")
-                }
-            }
-        }
+    companion object {
+        private val licenseHeaderRegex = Regex("""License android-sdk-(preview-)?license:""")
     }
 
-
     fun install(sdkKey: String): Pair<Observable<InstallStatus>, (String) -> Unit> {
-        val args = mutableListOf<String>()
+        val args = mutableListOf<String>(sdkManager.absolutePath)
         if (proxyConfig != null) {
             args.add("--proxy=${proxyConfig.type}")
             args.add("--proxy_host=${proxyConfig.host}")
             args.add("--proxy_port=${proxyConfig.port}")
         }
-
         if (noHttps) {
             args.add("--no_https")
         }
-
         args.add(sdkKey)
 
-        val processBuilder = ProcessBuilder(sdkManager.absolutePath, *args.toTypedArray())
-        logger.info("Attempting install: ${processBuilder.command().joinToString(separator = " ")}")
+        val inSubject = PublishSubject.create<String>()
+        return ProcessBuilder(args)
+                .toObservable("sdkmanager", logger, inSubject.doOnEach { logger.info("stdIn: $it") })
+                .subscribeOn(Schedulers.io())
+                .flatMap { (stdOut, stdErr) ->
+                    Observable.merge(
+                            stdOut.drain()
+                                    .subscribeOn(Schedulers.io())
+                                    .scan<Line>(Line.Pending("")) { last, next ->
+                                        if (last is Line.Done) {
+                                            Line.make("", next)
+                                        } else {
+                                            Line.make(last.value, next)
+                                        }
+                                    }
+                                    .ofType(Line.Done::class.java)
+                                    .map { it.value.trimEnd() }
+                                    .distinctUntilChanged()
+                                    .doOnNext { logger.info("stdOut: $it") },
 
-        val process = processBuilder.start()
-        val outputWriter = process.outputStream.bufferedWriter()
-
-        return Observable.merge(
-                process.inputStream.toBufferedSource()
-                        .drain()
-                        .subscribeOn(Schedulers.io())
-                        .scan<Line>(Line.Pending("")) { last, next ->
-                            if (last is Line.Done) {
-                                Line.make("", next)
-                            } else {
-                                Line.make(last.value, next)
-                            }
-                        }
-                        .ofType(Line.Done::class.java)
-                        .map { it.value.trimEnd() }
-                        .distinctUntilChanged()
-                        .doOnNext { logger.info("stdOut: $it") },
-
-                process.errorStream.toBufferedSource()
-                        .readLines()
-                        .doOnNext { logger.error("stdErr: $it") }
-                        .subscribeOn(Schedulers.io())
-                        .doOnNext { if (it.contains("Failed to find package")) throw Error.PackageNotFound(sdkKey) }
-                        .doOnNext { if (it.contains("Failed to create SDK root dir")) throw Error.Unknown(it) }
-                        .never(),
-
-                process.completionObservable<String>()
-                        .subscribeOn(Schedulers.io()))
+                            stdErr.readLines()
+                                    .doOnNext { logger.error("stdErr: $it") }
+                                    .subscribeOn(Schedulers.io())
+                                    .doOnNext { if (it.contains("Failed to find package")) throw Error.PackageNotFound(sdkKey) }
+                                    .doOnNext { if (it.contains("Failed to create SDK root dir")) throw Error.Unknown(it) }
+                                    .never()
+                    )
+                }
                 .scan<InstallStatus>(InstallStatus.InFlight("")) { last, next ->
                     if (next.contains("Usage: ")) {
                         throw Error.InvalidInvocation()
@@ -111,17 +87,25 @@ class SdkManager(private val sdkManager: File,
                         InstallStatus.InFlight(next)
                     }
                 }
-                .doOnDispose {
-                    outputWriter.close()
-                    process.destroy()
+                .to { it: String ->
+                    logger.info("callback hit")
+                    inSubject.onNext(it)
                 }
-                .to({ input: String ->
-                    logger.info("stdIn: $input")
-                    outputWriter.apply {
-                        write(input); newLine(); flush()
-                    }
-                    Unit
-                })
+    }
+
+    enum class LicenseType {
+        Sdk, SdkPreview;
+
+        companion object {
+            @JvmStatic
+            fun fromStdOut(stdOut: String): LicenseType {
+                return when {
+                    stdOut.contains("License android-sdk-license:") -> Sdk
+                    stdOut.contains("License android-sdk-preview-license:") -> SdkPreview
+                    else -> throw IllegalArgumentException("No matching stdOut title:\n $stdOut")
+                }
+            }
+        }
     }
 
     sealed class InstallStatus {
@@ -140,7 +124,7 @@ class SdkManager(private val sdkManager: File,
         class Unknown(message: String) : Error(message)
     }
 
-    sealed class Line {
+    private sealed class Line {
         abstract val value: String
 
         data class Pending(override val value: String) : Line()
@@ -149,76 +133,10 @@ class SdkManager(private val sdkManager: File,
         companion object {
             fun make(last: String, next: Char): Line {
                 val line = last + next
-                return if (line == "done") Done(line)
-                else if (next == '\n' || next == '\r' || last.contains("Accept? (y/N):")) Done(last)
+                return if (next == '\n' || next == '\r' || last.contains("Accept? (y/N):")) Done(last)
                 else Pending(line)
             }
         }
     }
-
-    fun InputStream.toBufferedSource(): BufferedSource {
-        return Okio.buffer(Okio.source(this))
-    }
-
-    fun BufferedSource.drain(): Observable<Char> {
-        return Observable.create { emitter ->
-            try {
-                var skipped = 0
-                while (true) {
-                    val next = try {
-                        readByte().toChar()
-                    } catch (error: IOException) {
-                        null
-                    }
-
-                    if (!emitter.isDisposed && next != null) {
-                        emitter.onNext(next)
-                    } else {
-                        skipped++
-                    }
-
-                    if (skipped > 10) break
-                    if (emitter.isDisposed) break
-                }
-
-                if (!emitter.isDisposed) emitter.onComplete()
-            } catch (error: Throwable) {
-                if (!emitter.isDisposed) emitter.onError(error)
-            }
-        }
-    }
-
-    fun BufferedSource.readLines(): Observable<String> {
-        return Observable.create { emitter ->
-            try {
-                var next = readUtf8Line()
-                while (next != null) {
-                    if (!emitter.isDisposed) emitter.onNext(next)
-                    next = readUtf8Line()
-                }
-                if (!emitter.isDisposed) emitter.onComplete()
-            } catch (error: Throwable) {
-                if (!emitter.isDisposed) emitter.onError(error)
-            }
-        }
-    }
-
-    fun <T> Process.completionObservable(): Observable<T> {
-        return Observable.create { emitter ->
-            val returnValue = try {
-                waitFor()
-            } catch (ignore: InterruptedException) {
-                0
-            }
-
-            if (!emitter.isDisposed) {
-                if (returnValue == 0) emitter.onComplete()
-                else emitter.onError(RuntimeException("sdkmanager exited with code: $returnValue"))
-            }
-        }
-    }
 }
 
-private fun <T> Observable<T>.never(): Observable<T> {
-    return filter { false }
-}

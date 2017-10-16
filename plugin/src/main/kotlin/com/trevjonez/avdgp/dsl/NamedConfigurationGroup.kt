@@ -28,10 +28,14 @@ open class NamedConfigurationGroup(val name: String) {
         configure.call()
     }
 
-    val emuConfig = EmuConfig()
-    fun emu(configure: Closure<EmuConfig>) {
-        configure.delegate = emuConfig
-        configure.call()
+    val launchOptions: MutableList<String> = mutableListOf()
+
+    fun launchOption(vararg values: String) {
+        values.forEach { launchOptions.add(it) }
+    }
+
+    fun launchOption(value: String) {
+        launchOptions.add(value)
     }
 
     fun systemImageKey(): String {
