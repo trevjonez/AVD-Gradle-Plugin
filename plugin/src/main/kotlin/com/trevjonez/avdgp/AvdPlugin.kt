@@ -19,6 +19,7 @@ package com.trevjonez.avdgp
 import com.trevjonez.avdgp.dsl.AvdExtension
 import com.trevjonez.avdgp.dsl.NamedConfigurationGroup
 import com.trevjonez.avdgp.dsl.ProxyConfig
+import com.trevjonez.avdgp.tasks.CreateAvdTask
 import com.trevjonez.avdgp.tasks.InstallSystemImageTask
 import org.gradle.api.DefaultTask
 import org.gradle.api.Plugin
@@ -28,12 +29,8 @@ import org.gradle.api.logging.Logger
 import java.io.File
 import java.util.Properties
 import kotlin.collections.LinkedHashMap
-import kotlin.collections.List
 import kotlin.collections.component1
 import kotlin.collections.component2
-import kotlin.collections.fold
-import kotlin.collections.forEach
-import kotlin.collections.mutableMapOf
 import kotlin.reflect.KClass
 
 class AvdPlugin : Plugin<Project> {
@@ -44,13 +41,15 @@ class AvdPlugin : Plugin<Project> {
     lateinit var extension: AvdExtension
 
     private lateinit var logger: Logger
+    private lateinit var project: Project
 
     override fun apply(project: Project) {
+        this.project = project
         extension = project.extensions.create("AVD", AvdExtension::class.java, project)
 
         logger = project.logger
         project.afterEvaluate {
-            val proxy = if(extension.proxyHost != null || extension.proxyPort != null || extension.proxyType != null) {
+            val proxy = if (extension.proxyHost != null || extension.proxyPort != null || extension.proxyType != null) {
                 ProxyConfig.checkParams(extension.proxyType, extension.proxyHost, extension.proxyPort)
                 ProxyConfig(extension.proxyType!!, extension.proxyHost!!, extension.proxyPort!!)
             } else null
@@ -64,7 +63,7 @@ class AvdPlugin : Plugin<Project> {
                                 type = InstallSystemImageTask::class,
                                 name = config.installTaskName(),
                                 description = "Install/Update system image").apply {
-                            sdkPath = File(lookupSdkPath(project))
+                            sdkPath = sdkFile
                             api = config.avdConfig.api
                             abi = config.avdConfig.abi
                             type = config.avdConfig.type
@@ -75,10 +74,22 @@ class AvdPlugin : Plugin<Project> {
                             noHttps = extension.noHttps
                         }
                     }
+
+            extension.configs
+                    .forEach { config ->
+                        project.createTask(
+                                type = CreateAvdTask::class,
+                                name = config.createTaskName(),
+                                description = "Create android virtual device",
+                                dependsOn = listOf(project.tasks.getByName(config.installTaskName()))).apply {
+                            sdkPath = sdkFile
+                            configGroup = config
+                        }
+                    }
         }
     }
 
-    private fun lookupSdkPath(project: Project): String {
+    private val sdkFile: File by lazy {
         val localPropFile = File(project.projectDir, "local.properties")
         if (localPropFile.exists()) {
 
@@ -88,7 +99,7 @@ class AvdPlugin : Plugin<Project> {
             val sdkDir = localProperties.getProperty("sdk.dir")
             if (sdkDir != null && File(sdkDir).exists()) {
                 logger.info("Using sdk.dir path for avd plugin: $sdkDir")
-                return sdkDir
+                return@lazy File(sdkDir)
             }
         } else {
             logger.info("local.properties doesn't exist at ${localPropFile.absolutePath}")
@@ -97,7 +108,7 @@ class AvdPlugin : Plugin<Project> {
         val androidHome = System.getenv("ANDROID_HOME")
         if (androidHome != null && File(androidHome).exists()) {
             logger.info("Using android home path for avd plugin: $androidHome")
-            return androidHome
+            return@lazy File(androidHome)
         }
 
         throw IllegalStateException("Unable to find android sdk. Specify ANDROID_HOME env variable or sdk.dir in local.properties")

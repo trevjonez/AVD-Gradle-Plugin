@@ -45,4 +45,16 @@ open class NamedConfigurationGroup(val name: String) {
     fun installTaskName(): String {
         return "installSystemImage_api${avdConfig.api.name}_${avdConfig.type.displayName()}_${avdConfig.abi.cpuArch}"
     }
+
+    fun createTaskName(): String {
+        return "createAvd_$escapedName"
+    }
+
+    fun startTaskName(): String {
+        return "startAvd_$escapedName"
+    }
+
+    fun stopTaskName(): String {
+        return "stopAvd_$escapedName"
+    }
 }

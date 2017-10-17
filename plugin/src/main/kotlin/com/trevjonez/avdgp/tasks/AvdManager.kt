@@ -17,74 +17,73 @@
 package com.trevjonez.avdgp.tasks
 
 import io.reactivex.Completable
-import io.reactivex.disposables.CompositeDisposable
-import io.reactivex.disposables.Disposable
-import io.reactivex.schedulers.Schedulers
-import okio.Okio.buffer
-import okio.Okio.source
+import io.reactivex.Observable
 import org.slf4j.Logger
 import java.io.File
-import java.util.concurrent.TimeUnit
 
 class AvdManager(private val avdManager: File,
                  private val logger: Logger) {
 
     //avdmanager create avd --name '26_6P_Playstore' --package 'system-images;android-26;google_apis_playstore;x86' --device 'Nexus 6P' --tag 'google_apis_playstore'
-    fun createAvd(name: String, sdkKey: String, device: String, options: List<String>): Completable {
+    fun createAvd(name: String, sdkKey: String, options: List<String>): Completable {
         val args = mutableListOf<String>(
                 avdManager.absolutePath,
                 "create", "avd",
                 "--name", name,
-                "--package", sdkKey,
-                "--device", device)
+                "--package", sdkKey)
         args.addAll(options)
         return ProcessBuilder(args).toCompletable("avdmanager", logger)
     }
-}
 
-fun ProcessBuilder.toCompletable(name: String, logger: Logger): Completable {
-    return Completable.create { emitter ->
-        try {
-            logger.info("Starting process: ${command().joinToString(separator = " ")}")
-            val process = start()
-            val disposable = CompositeDisposable()
-            val stdOut = buffer(source(process.inputStream))
-            disposable.add(stdOut.readLines()
-                    .subscribeOn(Schedulers.io())
-                    .subscribe { logger.info("stdOut: $it") })
-            val stdErr = buffer(source(process.errorStream))
-            disposable.add(stdErr.readLines()
-                    .subscribeOn(Schedulers.io())
-                    .subscribe { logger.error("stdErr: $it") })
-            disposable.add(object : Disposable {
-                override fun isDisposed(): Boolean {
-                    return !process.isAlive
+    fun listAvd(): List<String> {
+        return ProcessBuilder(avdManager.absolutePath, "list", "avd", "-c")
+                .toObservable("avdmanager", logger, Observable.never())
+                .flatMap { (stdOut, stdErr) ->
+                    Observable.merge(
+                            stdErr.readLines()
+                                    .doOnNext { logger.error("stdErr: $it") }
+                                    .never()
+                                    .map<Collector> { TODO() },
+
+                            stdOut.drain()
+                                    .scan<Collector>(Collector.Unknown("")) { last, next ->
+                                        if (last.done) {
+                                            Collector.Unknown(next.toString())
+                                        } else {
+                                            val value = last.value + next
+                                            if (value.startsWith("Parsing")) {
+                                                Collector.Parsing(value)
+                                            } else if (next == '\n' || next == '\r') {
+                                                Collector.AvdName(value)
+                                            } else {
+                                                Collector.Unknown(value)
+                                            }
+                                        }
+                                    }
+                    )
                 }
+                .filter { it.done }
+                .doOnNext { logger.info("stdOut: ${it.value}") }
+                .ofType(Collector.AvdName::class.java)
+                .map { it.value }
+                .toList()
+                .blockingGet()
+    }
 
-                override fun dispose() {
-                    process.destroy()
-                    stdOut.close()
-                    stdErr.close()
-                }
-            })
-            emitter.setDisposable(disposable)
+    private sealed class Collector {
+        abstract val value: String
+        abstract val done: Boolean
 
-            val finished = process.waitFor(10, TimeUnit.SECONDS)
-            if (!finished) process.destroy()
+        data class Unknown(override val value: String) : Collector() {
+            override val done = false
+        }
 
-            val result = if (finished) process.exitValue() else -424242
+        data class AvdName(override val value: String) : Collector() {
+            override val done = true
+        }
 
-            if (!emitter.isDisposed) {
-                when (result) {
-                    0 -> emitter.onComplete()
-                    -424242 -> emitter.onError(RuntimeException("$name timed out"))
-                    else -> emitter.onError(RuntimeException("$name exited with code $result"))
-                }
-            }
-        } catch (error: Throwable) {
-            if (!emitter.isDisposed) {
-                emitter.onError(error)
-            }
+        data class Parsing(override val value: String) : Collector() {
+            override val done = value.endsWith(".xml")
         }
     }
 }

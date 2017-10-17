@@ -16,13 +16,17 @@
 
 package com.trevjonez.avdgp.tasks
 
+import io.reactivex.Completable
 import io.reactivex.Observable
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
 import okio.BufferedSource
-import okio.Okio
+import okio.Okio.buffer
+import okio.Okio.source
+import org.slf4j.Logger
 import java.io.IOException
+import java.util.concurrent.TimeUnit
 
 typealias StdOut = okio.BufferedSource
 typealias StdErr = okio.BufferedSource
@@ -74,15 +78,15 @@ fun <T> Observable<T>.never(): Observable<T> {
     return filter { false }
 }
 
-fun ProcessBuilder.toObservable(name: String, logger: org.slf4j.Logger, stdIn: io.reactivex.Observable<String>): io.reactivex.Observable<Pair<com.trevjonez.avdgp.tasks.StdOut, com.trevjonez.avdgp.tasks.StdErr>> {
-    return Observable.create<Pair<StdOut, com.trevjonez.avdgp.tasks.StdErr>> { emitter ->
+fun ProcessBuilder.toObservable(name: String, logger: Logger, stdIn: Observable<String>): Observable<Pair<StdOut, StdErr>> {
+    return Observable.create<Pair<StdOut, StdErr>> { emitter ->
         try {
             logger.info("Starting process: ${command().joinToString(separator = " ")}")
             val process = start()
             val inWriter = process.outputStream.bufferedWriter()
             val disposable = CompositeDisposable()
-            val stdOut = Okio.buffer(Okio.source(process.inputStream))
-            val stdErr = Okio.buffer(Okio.source(process.errorStream))
+            val stdOut = buffer(source(process.inputStream))
+            val stdErr = buffer(source(process.errorStream))
 
             disposable.add(stdIn.observeOn(Schedulers.io())
                     .subscribe {
@@ -116,6 +120,59 @@ fun ProcessBuilder.toObservable(name: String, logger: org.slf4j.Logger, stdIn: i
                     emitter.onComplete()
                 else
                     emitter.onError(RuntimeException("$name exited with code $result"))
+            }
+        } catch (error: Throwable) {
+            if (!emitter.isDisposed) {
+                emitter.onError(error)
+            }
+        }
+    }
+}
+
+fun ProcessBuilder.toCompletable(name: String, logger: Logger): Completable {
+    return Completable.create { emitter ->
+        try {
+            logger.info("Starting process: ${command().joinToString(separator = " ")}")
+            val process = start()
+            val disposable = CompositeDisposable()
+
+            val stdOut = buffer(source(process.inputStream))
+            disposable.add(stdOut.drain()
+                    .subscribeOn(Schedulers.io())
+                    .scan("") { last, next -> last + next}
+                    .lastElement()
+                    .subscribe { logger.info("stdOut: $it") })
+
+            val stdErr = buffer(source(process.errorStream))
+            disposable.add(stdErr.readLines()
+                    .subscribeOn(Schedulers.io())
+                    .subscribe { logger.error("stdErr: $it") })
+
+            disposable.add(object : Disposable {
+                override fun isDisposed(): Boolean {
+                    return !process.isAlive
+                }
+
+                override fun dispose() {
+                    process.destroy()
+                    stdOut.close()
+                    stdErr.close()
+                }
+            })
+
+            emitter.setDisposable(disposable)
+
+            val finished = process.waitFor(10, TimeUnit.SECONDS)
+            if (!finished) process.destroy()
+
+            val result = if (finished) process.exitValue() else -424242
+
+            if (!emitter.isDisposed) {
+                when (result) {
+                    0 -> emitter.onComplete()
+                    -424242 -> emitter.onError(RuntimeException("$name timed out"))
+                    else -> emitter.onError(RuntimeException("$name exited with code $result"))
+                }
             }
         } catch (error: Throwable) {
             if (!emitter.isDisposed) {
