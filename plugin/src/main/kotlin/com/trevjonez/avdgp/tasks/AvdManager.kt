@@ -22,7 +22,8 @@ import org.slf4j.Logger
 import java.io.File
 
 class AvdManager(private val avdManager: File,
-                 private val logger: Logger) {
+                 private val logger: Logger,
+                 private val avdPath: File? = null) {
 
     //avdmanager create avd --name '26_6P_Playstore' --package 'system-images;android-26;google_apis_playstore;x86' --device 'Nexus 6P' --tag 'google_apis_playstore'
     fun createAvd(name: String, sdkKey: String, options: List<String>): Completable {
@@ -32,11 +33,18 @@ class AvdManager(private val avdManager: File,
                 "--name", name,
                 "--package", sdkKey)
         args.addAll(options)
-        return ProcessBuilder(args).toCompletable("avdmanager", logger)
+        return ProcessBuilder(args)
+                .also { builder ->
+                    avdPath?.let { builder.environment().put("ANDROID_AVD_HOME", it.absolutePath) }
+                }
+                .toCompletable("avdmanager", logger)
     }
 
     fun listAvd(): List<String> {
         return ProcessBuilder(avdManager.absolutePath, "list", "avd", "-c")
+                .also { builder ->
+                    avdPath?.let { builder.environment().put("ANDROID_AVD_HOME", it.absolutePath) }
+                }
                 .toObservable("avdmanager", logger, Observable.never())
                 .flatMap { (stdOut, stdErr) ->
                     Observable.merge(
@@ -65,9 +73,12 @@ class AvdManager(private val avdManager: File,
                 .filter { it.done }
                 .doOnNext { logger.info("stdOut: ${it.value}") }
                 .ofType(Collector.AvdName::class.java)
-                .map { it.value }
+                .map { it.value.trim() }
                 .toList()
                 .blockingGet()
+                .also {
+                    logger.info("avdList ${it.joinToString()}")
+                }
     }
 
     private sealed class Collector {

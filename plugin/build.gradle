@@ -63,10 +63,6 @@ test {
 tasks.findByPath('test').dependsOn(':plugin:install')
 tasks.findByPath('test').dependsOn(':plugin:updateTools')
 
-if (localProperties.getProperty("useProxy", "false") == "true") {
-    tasks.findByPath('test').dependsOn(':plugin:startSquidContainer')
-}
-
 task sourcesJar(type: Jar, dependsOn: classes) {
     classifier 'sources'
     from sourceSets.main.allSource

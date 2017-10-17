@@ -25,15 +25,17 @@ open class CreateAvdTask : DefaultTask() {
     lateinit var sdkPath: File
     lateinit var configGroup: NamedConfigurationGroup
 
+    var avdPath: File? = null
+
     private val avdManager by lazy {
-        AvdManager(File(sdkPath, "tools${File.separator}bin${File.separator}avdmanager"), logger)
+        AvdManager(File(sdkPath, "tools${File.separator}bin${File.separator}avdmanager"), logger, avdPath)
     }
 
     init {
         outputs.upToDateWhen {
             if (configGroup.avdConfig.forceCreate) false
             else {
-                avdManager.listAvd().contains(configGroup.escapedName)
+                avdManager.listAvd().contains(configGroup.escapedName.trim())
             }
         }
     }

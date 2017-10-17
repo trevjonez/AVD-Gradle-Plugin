@@ -84,6 +84,7 @@ class AvdPlugin : Plugin<Project> {
                                 dependsOn = listOf(project.tasks.getByName(config.installTaskName()))).apply {
                             sdkPath = sdkFile
                             configGroup = config
+                            avdPath = extension.avdPath
                         }
                     }
         }

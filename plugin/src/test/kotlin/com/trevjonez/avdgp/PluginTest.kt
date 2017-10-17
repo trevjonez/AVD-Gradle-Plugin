@@ -450,8 +450,12 @@ class PluginTest {
     @UseTemporaryFolder
     fun `create avd task completes successfully`() {
         var projectDir: File? = null
+        var avdDir: File? = null
         var sdkDir: File? = null
         testDir.root.apply {
+            childDirectory(".android") {
+                avdDir = childDirectory("avd")
+            }
             childDirectory("Android") {
                 sdkDir = childDirectory("sdk") {
                     File(System.getProperty("sdkToolsPath"))
@@ -496,6 +500,7 @@ class PluginTest {
                         }
                         acceptAndroidSdkLicense true
                         acceptAndroidSdkPreviewLicense true
+                        avdPath file('${avdDir!!.absolutePath}')
                 ${
                 if (System.getProperty("useProxy") == "true") {
                     """
@@ -520,6 +525,96 @@ class PluginTest {
                 .build()
 
         assertThat(buildResult.task(":createAvd_Nexus_5x_API_O")?.outcome).isEqualTo(SUCCESS)
+    }
+
+    @Test
+    @UseTemporaryFolder
+    fun `create avd task is up to date on second invocation`() {
+        var projectDir: File? = null
+        var avdDir: File? = null
+        var sdkDir: File? = null
+        testDir.root.apply {
+            childDirectory(".android") {
+                avdDir = childDirectory("avd")
+            }
+            childDirectory("Android") {
+                sdkDir = childDirectory("sdk") {
+                    File(System.getProperty("sdkToolsPath"))
+                            .copyRecursively(childFile("tools"))
+                    childDirectory("tools") {
+                        childDirectory("bin") {
+                            ProcessBuilder("chmod", "+x", childFile("sdkmanager").absolutePath).start()
+                                    .waitFor(2, TimeUnit.SECONDS)
+                            ProcessBuilder("chmod", "+x", childFile("avdmanager").absolutePath).start()
+                                    .waitFor(2, TimeUnit.SECONDS)
+                        }
+                    }
+                }
+            }
+
+            projectDir = childDirectory("sampleProject") {
+                childFile("local.properties").writeText("sdk.dir=${sdkDir?.absolutePath}")
+                @Language("Groovy")
+                val buildFile = """
+                    buildscript {
+                        repositories {
+                            google()
+                            jcenter()
+                            mavenLocal()
+                        }
+                        dependencies {
+                            classpath "com.github.trevjonez:AVD-Gradle-Plugin:${System.getProperty("avd_plugin_version")}"
+                        }
+                    }
+                    apply plugin: 'AVD'
+
+                    AVD {
+                        configs {
+                            "Nexus 5x API O" {
+                                avd {
+                                    abi "x86"
+                                    api 26
+                                    type "google_apis"
+                                    deviceId "Nexus 5X"
+                                }
+                            }
+                        }
+                        acceptAndroidSdkLicense true
+                        acceptAndroidSdkPreviewLicense true
+                        avdPath file('${avdDir!!.absolutePath}')
+                ${
+                if (System.getProperty("useProxy") == "true") {
+                    """
+                        proxyType "http"
+                        proxyHost "${System.getProperty("proxyIp")}"
+                        proxyPort ${System.getProperty("proxyPort")}
+                        noHttps true
+                    """.trimIndent()
+                } else ""
+                }
+                    }
+                """.trimIndent()
+                childFile("build.gradle").writeText(buildFile)
+            }
+        }
+
+        var buildResult = GradleRunner.create()
+                .withProjectDir(projectDir)
+                .withDebug(true)
+                .withArguments("createAvd_Nexus_5x_API_O", "--stacktrace", "--info")
+                .forwardOutput()
+                .build()
+
+        assertThat(buildResult.task(":createAvd_Nexus_5x_API_O")?.outcome).isEqualTo(SUCCESS)
+
+        buildResult = GradleRunner.create()
+                .withProjectDir(projectDir)
+                .withDebug(true)
+                .withArguments("createAvd_Nexus_5x_API_O", "--stacktrace", "--info")
+                .forwardOutput()
+                .build()
+
+        assertThat(buildResult.task(":createAvd_Nexus_5x_API_O")?.outcome).isEqualTo(UP_TO_DATE)
     }
 
     @Test

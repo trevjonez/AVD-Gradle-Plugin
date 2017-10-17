@@ -137,10 +137,8 @@ fun ProcessBuilder.toCompletable(name: String, logger: Logger): Completable {
             val disposable = CompositeDisposable()
 
             val stdOut = buffer(source(process.inputStream))
-            disposable.add(stdOut.drain()
+            disposable.add(stdOut.readLines()
                     .subscribeOn(Schedulers.io())
-                    .scan("") { last, next -> last + next}
-                    .lastElement()
                     .subscribe { logger.info("stdOut: $it") })
 
             val stdErr = buffer(source(process.errorStream))

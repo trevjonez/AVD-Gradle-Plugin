@@ -19,6 +19,7 @@ package com.trevjonez.avdgp.dsl
 import groovy.lang.Closure
 import org.gradle.api.NamedDomainObjectContainer
 import org.gradle.api.Project
+import java.io.File
 
 open class AvdExtension(project: Project) {
     companion object {
@@ -68,5 +69,10 @@ open class AvdExtension(project: Project) {
     var noHttps: Boolean = false
     fun noHttps(value: Boolean) {
         noHttps = value
+    }
+
+    var avdPath: File? = null
+    fun avdPath(value: File?) {
+        avdPath = value
     }
 }
