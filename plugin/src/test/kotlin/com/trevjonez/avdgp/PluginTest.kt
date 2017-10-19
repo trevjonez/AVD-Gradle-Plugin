@@ -679,10 +679,9 @@ class PluginTest {
         assertThat(buildResult.output).contains("Missing port for valid proxy config")
     }
 
-
     @Test
     @UseTemporaryFolder
-    fun `full end to end run of the functionality`() {
+    fun `install image, create avd, start avd, kill avd`() {
         var projectDir: File? = null
         var avdDir: File? = null
         var sdkDir: File? = null
@@ -764,6 +763,91 @@ class PluginTest {
         assertThat(buildResult.task(":startAvd_Nexus_5x_API_26")?.outcome).isEqualTo(SUCCESS)
 
         buildResult = GradleRunner.create()
+                .withProjectDir(projectDir)
+                .withDebug(true)
+                .withArguments("stopAvd_Nexus_5x_API_26", "--stacktrace", "--info")
+                .forwardOutput()
+                .build()
+
+        assertThat(buildResult.task(":stopAvd_Nexus_5x_API_26")?.outcome).isEqualTo(SUCCESS)
+    }
+
+    @Test
+    @UseTemporaryFolder
+    fun `kill avd works even when not running`() {
+        //This test seems odd but up to date doesn't work because of lacking history and outputs
+        var projectDir: File? = null
+        var avdDir: File? = null
+        var sdkDir: File? = null
+        testDir.root.apply {
+            childDirectory(".android") {
+                avdDir = childDirectory("avd")
+            }
+            childDirectory("Android") {
+                sdkDir = childDirectory("sdk") {
+                    File(System.getProperty("sdkPath")).copyRecursively(this)
+                    childDirectory("tools") {
+                        childDirectory("bin") {
+                            listFiles()?.forEach {
+                                ProcessBuilder("chmod", "+x", it.absolutePath).start()
+                                        .waitFor(2, TimeUnit.SECONDS)
+                            }
+                        }
+                    }
+                    childDirectory("platform-tools") {
+                        ProcessBuilder("chmod", "+x", childFile("adb").absolutePath).start()
+                                .waitFor(2, TimeUnit.SECONDS)
+                    }
+                }
+            }
+
+            projectDir = childDirectory("sampleProject") {
+                childFile("local.properties").writeText("sdk.dir=${sdkDir?.absolutePath}")
+                @Language("Groovy")
+                val buildFile = """
+                    buildscript {
+                        repositories {
+                            google()
+                            jcenter()
+                            mavenLocal()
+                        }
+                        dependencies {
+                            classpath "com.github.trevjonez:AVD-Gradle-Plugin:${System.getProperty("avd_plugin_version")}"
+                        }
+                    }
+                    apply plugin: 'AVD'
+
+                    AVD {
+                        configs {
+                            "Nexus 5x API 26" {
+                                avd {
+                                    abi "x86"
+                                    api 26
+                                    type "google_apis"
+                                    deviceId "Nexus 5X"
+                                }
+                            }
+                        }
+                        acceptAndroidSdkLicense true
+                        acceptAndroidSdkPreviewLicense true
+                        avdPath file('${avdDir!!.absolutePath}')
+                ${
+                if (System.getProperty("useProxy") == "true") {
+                    """
+                        proxyType "http"
+                        proxyHost "${System.getProperty("proxyIp")}"
+                        proxyPort ${System.getProperty("proxyPort")}
+                        noHttps true
+                    """.trimIndent()
+                } else ""
+                }
+                    }
+                """.trimIndent()
+                childFile("build.gradle").writeText(buildFile)
+            }
+        }
+
+        val buildResult = GradleRunner.create()
                 .withProjectDir(projectDir)
                 .withDebug(true)
                 .withArguments("stopAvd_Nexus_5x_API_26", "--stacktrace", "--info")

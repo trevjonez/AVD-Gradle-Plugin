@@ -72,7 +72,8 @@ open class CreateAvdTask : DefaultTask() {
             options.add("--snapshot")
         }
 
-        avdManager.createAvd(configGroup.escapedName, configGroup.systemImageKey(), options)
+        avdManager.createAvd(configGroup.escapedName, configGroup.systemImageKey(), configGroup.avdConfig.coreCount,
+                options, configGroup.avdConfig.appendToConfigIni)
                 .blockingAwait()
     }
 }

@@ -22,6 +22,7 @@ import com.trevjonez.avdgp.dsl.ProxyConfig
 import com.trevjonez.avdgp.tasks.CreateAvdTask
 import com.trevjonez.avdgp.tasks.InstallSystemImageTask
 import com.trevjonez.avdgp.tasks.StartEmulatorTask
+import com.trevjonez.avdgp.tasks.StopEmulatorTask
 import org.gradle.api.DefaultTask
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -96,6 +97,14 @@ class AvdPlugin : Plugin<Project> {
                             sdkPath = sdkFile
                             configGroup = config
                             avdPath = extension.avdPath
+                        }
+
+                        project.createTask(
+                                type = StopEmulatorTask::class,
+                                name = config.stopTaskName(),
+                                description = "Kill android virtual device").apply {
+                            sdkPath = sdkFile
+                            configGroup = config
                         }
                     }
         }

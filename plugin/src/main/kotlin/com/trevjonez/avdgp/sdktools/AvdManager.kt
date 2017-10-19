@@ -16,18 +16,20 @@
 
 package com.trevjonez.avdgp.sdktools
 
+import com.android.prefs.AndroidLocation
 import com.trevjonez.avdgp.rx.*
 import io.reactivex.Completable
 import io.reactivex.Observable
 import org.slf4j.Logger
 import java.io.File
+import java.util.*
 
 class AvdManager(private val avdManager: File,
                  private val logger: Logger,
                  private val avdPath: File? = null) {
 
     //avdmanager create avd --name '26_6P_Playstore' --package 'system-images;android-26;google_apis_playstore;x86' --device 'Nexus 6P' --tag 'google_apis_playstore'
-    fun createAvd(name: String, sdkKey: String, options: List<String>): Completable {
+    fun createAvd(name: String, sdkKey: String, coreCount: Int, options: List<String>, iniPatches: List<Pair<String, String>>): Completable {
         val args = mutableListOf<String>(
                 avdManager.absolutePath,
                 "create", "avd",
@@ -39,6 +41,25 @@ class AvdManager(private val avdManager: File,
                     avdPath?.let { builder.environment().put("ANDROID_AVD_HOME", it.absolutePath) }
                 }
                 .toCompletable("avdmanager", logger)
+                .andThen { observer ->
+                    try {
+                        val avdDir = File(avdPath?.absolutePath ?: AndroidLocation.getFolder(), "$name.avd")
+                        val configIni = File(avdDir, "config.ini")
+                        val properties = Properties()
+                        properties.load(configIni.inputStream())
+                        val height = properties["hw.lcd.height"]
+                        val width = properties["hw.lcd.width"]
+                        properties.setProperty("skin.name", "${width}x$height")
+                        properties.setProperty("hw.cput.ncore", coreCount.toString())
+                        iniPatches.forEach { (k, v) -> properties.setProperty(k, v) }
+                        configIni.writer().use {
+                            properties.store(it, "Created by AVD-Gradle-Plugin via avdmanager")
+                        }
+                        observer.onComplete()
+                    } catch (error: Throwable) {
+                        observer.onError(error)
+                    }
+                }
     }
 
     fun listAvd(): List<String> {

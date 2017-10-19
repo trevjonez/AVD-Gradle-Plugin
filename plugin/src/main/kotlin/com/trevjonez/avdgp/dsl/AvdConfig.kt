@@ -30,6 +30,21 @@ class AvdConfig {
     var sdPath: File? = null
     var path: File? = null
     var snapshot = false
+    var coreCount = Runtime.getRuntime().availableProcessors()
+        set(value) {
+            require(value >= 1)
+            val available = Runtime.getRuntime().availableProcessors()
+            field = if (value > available) available else value
+        }
+    val appendToConfigIni = mutableListOf<Pair<String,String>>().apply {
+        add("skin.dynamic" to "yes")
+        add("showDeviceFrame" to "no")
+        add("skin.path" to "_no_skin")
+        add("skin.path.backup" to "_no_skin")
+        add("hw.gps" to "yes")
+        add("hw.gpu.enabled" to "yes")
+        add("hw.gpu.mode" to "auto")
+    }
 
     fun abi(abi: Abi) {
         this.abi = abi
@@ -69,5 +84,13 @@ class AvdConfig {
 
     fun forceCreate(forceCreate: Boolean) {
         this.forceCreate = forceCreate
+    }
+
+    fun coreCount(value: Int) {
+        coreCount = value
+    }
+
+    fun configIniProperty(key: String, value: String) {
+        appendToConfigIni.add(key to value)
     }
 }

@@ -17,21 +17,16 @@
 package com.trevjonez.avdgp.tasks
 
 import com.trevjonez.avdgp.dsl.NamedConfigurationGroup
-import com.trevjonez.avdgp.rx.doOnFirst
 import com.trevjonez.avdgp.rx.readLines
 import com.trevjonez.avdgp.rx.toObservable
 import com.trevjonez.avdgp.sdktools.Adb
+import com.trevjonez.avdgp.sdktools.AvdDeviceNameTransformer
 import io.reactivex.Observable
 import io.reactivex.Single
-import io.reactivex.SingleSource
-import io.reactivex.SingleTransformer
 import io.reactivex.schedulers.Schedulers
-import io.reactivex.subjects.PublishSubject
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.TaskAction
-import org.slf4j.Logger
 import java.io.File
-import java.net.Socket
 import java.util.concurrent.TimeUnit
 
 open class StartEmulatorTask : DefaultTask() {
@@ -59,11 +54,15 @@ open class StartEmulatorTask : DefaultTask() {
 
     @TaskAction
     fun invoke() {
-        val args = mutableListOf<String>("nohup", File(sdkPath, "emulator${File.separator}emulator").absolutePath).apply {
+        val args = mutableListOf("/bin/sh", "-c")
+        val emuInvocation = mutableListOf(File(sdkPath, "emulator${File.separator}emulator").absolutePath.replace(" ", "\\ ")).apply {
             add("-avd")
             add(configGroup.escapedName)
             configGroup.launchOptions.forEach { add(it) }
-        }
+            add("&")
+        }.joinToString(separator = " ")
+        args.add(emuInvocation)
+
         //Launch emulator process
         var processError: Throwable? = null
         val processDisposable = ProcessBuilder(args)
@@ -71,7 +70,7 @@ open class StartEmulatorTask : DefaultTask() {
                     builder.environment().put("ANDROID_SDK_ROOT", sdkPath.absolutePath)
                     avdPath?.let { builder.environment().put("ANDROID_AVD_HOME", it.absolutePath) }
                 }
-                .toObservable("nohup emulator", logger, Observable.never())
+                .toObservable("emulator", logger, Observable.never())
                 .subscribeOn(Schedulers.io())
                 .flatMap { (stdOut, stdErr) ->
                     Observable.merge(
@@ -109,29 +108,5 @@ open class StartEmulatorTask : DefaultTask() {
     }
 
     private fun Single<Set<Adb.Device>>.keyedByName() = compose(deviceNameTransformer)
-
-    private class AvdDeviceNameTransformer(private val logger: Logger)
-        : SingleTransformer<Set<Adb.Device>, Map<String, Adb.Device>> {
-
-        override fun apply(upstream: Single<Set<Adb.Device>>): SingleSource<Map<String, Adb.Device>> {
-            return upstream.flatMap {
-                Observable.fromIterable(it)
-                        .flatMapSingle { device ->
-                            val sendSubject = PublishSubject.create<String>()
-                            Socket("localhost", device.emulatorPort())
-                                    .toObservable(sendSubject.doOnNext { logger.info("sending: $it") })
-                                    .subscribeOn(Schedulers.io())
-                                    .skipWhile { it.trim() != "OK" }
-                                    .doOnFirst { sendSubject.onNext("avd name") }
-                                    .filter { it != "OK" }
-                                    .firstOrError()
-                                    .doOnSuccess { logger.info("devName: $it") }
-                                    .map { it to device }
-                        }
-                        .toList()
-                        .map { it.toMap() }
-            }
-        }
-    }
 }
 
