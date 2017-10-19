@@ -1,6 +1,28 @@
 # AVD-Gradle-Plugin
-Gradle plugin to assist in managing android virtual devices
+Gradle plugin to assist in managing android virtual devices. 
 
+## Usage
+
+#### Installation
+In the appropriate `build.gradle` file(s):
+
+1. Add the jitpack maven repository and classpath dependency
+```groovy
+buildscript {
+    repositories {
+        maven { url "https://jitpack.io" }
+    }
+    dependencies {
+        classpath "com.github.trevjonez:AVD-Gradle-Plugin:0.1.0"
+    }
+```
+
+2. Apply the plugin
+```groovy
+apply plugin: 'AVD'
+```
+
+3. Configure your AVDs to create via the DSL options
 ```groovy
 AVD {
     //By default the install task(s) up to date check will run `sdkmanager` to see if an update is available
@@ -30,22 +52,43 @@ AVD {
                 coreCount 2 //optional defaults to # of cores on machine
                 configIniProperty("key", "value) //add or overwrite config.ini file property
             }
-            launch_option("-wipe-data")
-            launch_option("-memory", "2048")
+            launchOption("-wipe-data")
+            launchOption("-memory", "2048") //varargs
         }
     }
 }
 ```
 
-## Tasks 
+#### Tasks 
  - Install: `installSystemImage_${api-level}_${type}_${abi}` -> `installSystemImage_api26_GoogleApis_x86` 
- - (per avd) create avd TODO()
- - (per avd) start avd TODO()
- - (per avd) stop avd TODO()
+ - Create: `createAvd_${escapedAvdName}` -> `createAvd_tablet_25`
+ - Start: `startAvd_${escapedAvdName}` -> `startAvd_tablet_25`
+ - Stop: `stopAvd_${escapedAvdName}` -> `stopAvd_tablet_25`
  
- ## Usage
- Don't. It isn't usable yet. 
+ ## Notes on Compatibility
  
- ## Scratch pad
+ 
+ The plugin is developed against specific version of gradle and the android gradle plugin and sdk tools.
+ In most cases using the latest version of gradle is safe but not guaranteed. 
+ Currently this has only been tested against osx hosts and should work on any unix machine as well. 
+ Highly likely that it won't work on windows. Open issues and lets talk if you need that. 
+ 
+ AVD plugin version | Gradle version | Android plugin version
+ ----- | ---- | -----
+ 0.1.0 | 4.2.1  | 3.0.0-rc1
+ 
+ 
+## License
+    Copyright 2016 Trevor Jones
 
- `avdmanager create avd --name '26_6P_Playstore' --package 'system-images;android-26;google_apis_playstore;x86' --device 'Nexus 6P'`
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
