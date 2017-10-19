@@ -17,6 +17,8 @@ AVD {
     
     noHttps true //default false (optional)
     
+    avdPath file("/some/path/to/avd") //defaults to `$HOME/.android/avd`
+    
     configs {
         tablet_25 {
             avd {
@@ -25,6 +27,8 @@ AVD {
                 type 'google_apis_playstore' | 'google_apis' | 'default' | 'android-wear' | 'android-tv' //(default google_apis)
                 deviceId "pixel" //from `avdmanager list device`
                 sdSize "1000M" //optional
+                coreCount 2 //optional defaults to # of cores on machine
+                configIniProperty("key", "value) //add or overwrite config.ini file property
             }
             launch_option("-wipe-data")
             launch_option("-memory", "2048")
