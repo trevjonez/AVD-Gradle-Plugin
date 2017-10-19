@@ -726,7 +726,7 @@ class PluginTest {
 
                     AVD {
                         configs {
-                            "Nexus 5x API O" {
+                            "Nexus 5x API 26" {
                                 avd {
                                     abi "x86"
                                     api 26
@@ -757,20 +757,20 @@ class PluginTest {
         var buildResult = GradleRunner.create()
                 .withProjectDir(projectDir)
                 .withDebug(true)
-                .withArguments("startAvd_Nexus_5x_API_O", "--stacktrace", "--info")
+                .withArguments("startAvd_Nexus_5x_API_26", "--stacktrace", "--info")
                 .forwardOutput()
                 .build()
 
-        assertThat(buildResult.task(":startAvd_Nexus_5x_API_O")?.outcome).isEqualTo(SUCCESS)
+        assertThat(buildResult.task(":startAvd_Nexus_5x_API_26")?.outcome).isEqualTo(SUCCESS)
 
         buildResult = GradleRunner.create()
                 .withProjectDir(projectDir)
                 .withDebug(true)
-                .withArguments("stopAvd_Nexus_5x_API_O", "--stacktrace", "--info")
+                .withArguments("stopAvd_Nexus_5x_API_26", "--stacktrace", "--info")
                 .forwardOutput()
                 .build()
 
-        assertThat(buildResult.task(":stopAvd_Nexus_5x_API_O")?.outcome).isEqualTo(SUCCESS)
+        assertThat(buildResult.task(":stopAvd_Nexus_5x_API_26")?.outcome).isEqualTo(SUCCESS)
     }
 
     private fun File.childDirectory(dirName: String, block: File.() -> Unit = {}): File {

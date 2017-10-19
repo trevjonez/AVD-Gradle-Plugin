@@ -18,6 +18,7 @@ package com.trevjonez.avdgp.tasks
 
 import com.trevjonez.avdgp.dsl.NamedConfigurationGroup
 import com.trevjonez.avdgp.rx.doOnFirst
+import com.trevjonez.avdgp.rx.readLines
 import com.trevjonez.avdgp.rx.toObservable
 import com.trevjonez.avdgp.sdktools.Adb
 import io.reactivex.Observable
@@ -31,19 +32,26 @@ import org.gradle.api.tasks.TaskAction
 import org.slf4j.Logger
 import java.io.File
 import java.net.Socket
+import java.util.concurrent.TimeUnit
 
 open class StartEmulatorTask : DefaultTask() {
     lateinit var sdkPath: File
     lateinit var configGroup: NamedConfigurationGroup
 
+    var avdPath: File? = null
+
     private val adb by lazy {
         Adb(File(sdkPath, "platform-tools${File.separator}adb"), logger)
+    }
+
+    private val deviceNameTransformer by lazy {
+        AvdDeviceNameTransformer(logger)
     }
 
     init {
         outputs.upToDateWhen {
             adb.runningEmulators()
-                    .compose(AvdDeviceNameTransformer(logger))
+                    .keyedByName()
                     .blockingGet()
                     .any { it.key == configGroup.escapedName }
         }
@@ -56,12 +64,51 @@ open class StartEmulatorTask : DefaultTask() {
             add(configGroup.escapedName)
             configGroup.launchOptions.forEach { add(it) }
         }
-        ProcessBuilder(args)
-                .redirectErrorStream(false)
-                .start()
+        //Launch emulator process
+        var processError: Throwable? = null
+        val processDisposable = ProcessBuilder(args)
+                .also { builder ->
+                    builder.environment().put("ANDROID_SDK_ROOT", sdkPath.absolutePath)
+                    avdPath?.let { builder.environment().put("ANDROID_AVD_HOME", it.absolutePath) }
+                }
+                .toObservable("nohup emulator", logger, Observable.never())
+                .subscribeOn(Schedulers.io())
+                .flatMap { (stdOut, stdErr) ->
+                    Observable.merge(
+                            stdOut.readLines()
+                                    .subscribeOn(Schedulers.io())
+                                    .doOnNext { logger.info("stdOut: $it") },
 
-        //TODO figure out how to wait until the avd has come up and is ready. boot completed property read via socket or adb?
+                            stdErr.readLines()
+                                    .subscribeOn(Schedulers.io())
+                                    .doOnNext { logger.info("stdErr: $it") }
+                    )
+                }
+                .subscribe({}, { processError = it })
+
+        //Read running emulators until ours shows up so we have the port to query
+        val device = Observable.interval(2, TimeUnit.SECONDS)
+                .switchMapSingle { adb.runningEmulators().keyedByName() }
+                .doOnNext { processError?.let { throw it } }
+                .skipWhile { !it.keys.contains(configGroup.escapedName) || it[configGroup.escapedName]!!.status != Adb.Device.Status.ONLINE }
+                .firstOrError()
+                .timeout(30, TimeUnit.SECONDS)
+                .map { it[configGroup.escapedName]!! }
+                .blockingGet()
+
+        //query for the boot anim property to detect when the system ui is ready
+        Observable.interval(2, TimeUnit.SECONDS)
+                .doOnNext { processError?.let { throw it } }
+                .map { adb.queryProperty("init.svc.bootanim", device) }
+                .skipWhile { it != "stopped" }
+                .firstOrError()
+                .toCompletable()
+                .blockingAwait()
+
+        processDisposable.dispose()
     }
+
+    private fun Single<Set<Adb.Device>>.keyedByName() = compose(deviceNameTransformer)
 
     private class AvdDeviceNameTransformer(private val logger: Logger)
         : SingleTransformer<Set<Adb.Device>, Map<String, Adb.Device>> {
@@ -78,6 +125,7 @@ open class StartEmulatorTask : DefaultTask() {
                                     .doOnFirst { sendSubject.onNext("avd name") }
                                     .filter { it != "OK" }
                                     .firstOrError()
+                                    .doOnSuccess { logger.info("devName: $it") }
                                     .map { it to device }
                         }
                         .toList()

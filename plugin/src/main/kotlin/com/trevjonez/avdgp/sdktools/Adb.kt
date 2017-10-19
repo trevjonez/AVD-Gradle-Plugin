@@ -40,11 +40,14 @@ class Adb(private val adbPath: File, private val logger: Logger) {
                             stdErr.readLines()
                                     .subscribeOn(Schedulers.io())
                                     .doOnNext { logger.info("stdErr: $it") }
+                                    .doOnError { logger.info("stdErr threw") }
                                     .never(),
                             stdOut.readLines()
                                     .subscribeOn(Schedulers.io())
                                     .doOnNext { logger.info("stdOut: $it") }
-                    )
+                                    .doOnError { logger.info("stdOut threw") }
+                                    .onErrorResumeNext { _: Throwable -> Observable.empty<String>() }
+                    ).map { it.trim() }
                 }
                 .filter { it.endsWith("offline") || it.endsWith("device") || it.endsWith("unauthorized") }
                 .map { it.split(whitespace).let { Device(it[0], Device.Status.fromString(it[1])) } }
@@ -57,7 +60,6 @@ class Adb(private val adbPath: File, private val logger: Logger) {
         if (!device.isEmulator)
             return Completable.error(IllegalArgumentException("Attempting to kill something other than an AVD"))
 
-        //TODO perhaps do this with a socket so we know when the avd goes down?
         return ProcessBuilder(adbPath.absolutePath, "-s", device.id, "emu", "kill")
                 .toCompletable("adb", logger)
     }
@@ -81,5 +83,24 @@ class Adb(private val adbPath: File, private val logger: Logger) {
             require(isEmulator) { "only emulators have ports assigned to them" }
             return id.removePrefix("emulator-").toInt()
         }
+    }
+
+    fun queryProperty(property: String, device: Device): String {
+        return ProcessBuilder(adbPath.absolutePath, "-s", device.id, "shell", "getprop", property)
+                .toObservable("adb", logger, Observable.never())
+                .subscribeOn(Schedulers.io())
+                .flatMap { (stdOut, stdErr) ->
+                    Observable.merge(
+                            stdOut.readLines()
+                                    .subscribeOn(Schedulers.io())
+                                    .doOnNext { logger.info("stdOut: $it") },
+                            stdErr.readLines()
+                                    .subscribeOn(Schedulers.io())
+                                    .doOnNext { logger.info("stdErr: $it") }
+                                    .never()
+                    )
+                }
+                .firstOrError()
+                .blockingGet()
     }
 }
