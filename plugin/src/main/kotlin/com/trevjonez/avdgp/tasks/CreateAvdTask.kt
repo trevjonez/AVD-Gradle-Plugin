@@ -17,6 +17,7 @@
 package com.trevjonez.avdgp.tasks
 
 import com.trevjonez.avdgp.dsl.NamedConfigurationGroup
+import com.trevjonez.avdgp.sdktools.AvdManager
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.TaskAction
 import java.io.File

@@ -20,6 +20,7 @@ import com.android.sdklib.devices.Abi
 import com.trevjonez.avdgp.dsl.ApiLevel
 import com.trevjonez.avdgp.dsl.ApiType
 import com.trevjonez.avdgp.dsl.ProxyConfig
+import com.trevjonez.avdgp.sdktools.SdkManager
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.TaskAction
 import java.io.File

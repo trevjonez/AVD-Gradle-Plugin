@@ -34,10 +34,6 @@ open class NamedConfigurationGroup(val name: String) {
         values.forEach { launchOptions.add(it) }
     }
 
-    fun launchOption(value: String) {
-        launchOptions.add(value)
-    }
-
     fun systemImageKey(): String {
         return "system-images;${avdConfig.api.cliValue};${avdConfig.type.cliValue};${avdConfig.abi.cpuArch}"
     }

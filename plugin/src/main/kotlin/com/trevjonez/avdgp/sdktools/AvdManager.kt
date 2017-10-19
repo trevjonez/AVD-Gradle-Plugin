@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package com.trevjonez.avdgp.tasks
+package com.trevjonez.avdgp.sdktools
 
+import com.trevjonez.avdgp.rx.*
 import io.reactivex.Completable
 import io.reactivex.Observable
 import org.slf4j.Logger

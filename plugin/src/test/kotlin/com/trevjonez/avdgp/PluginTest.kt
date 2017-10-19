@@ -41,8 +41,7 @@ class PluginTest {
         testDir.root.apply {
             childDirectory("Android") {
                 sdkDir = childDirectory("sdk") {
-                    File(System.getProperty("sdkToolsPath"))
-                            .copyRecursively(childFile("tools"))
+                    File(System.getProperty("sdkPath")).copyRecursively(this)
                 }
             }
 
@@ -99,8 +98,7 @@ class PluginTest {
         testDir.root.apply {
             childDirectory("Android") {
                 sdkDir = childDirectory("sdk") {
-                    File(System.getProperty("sdkToolsPath"))
-                            .copyRecursively(childFile("tools"))
+                    File(System.getProperty("sdkPath")).copyRecursively(this)
                 }
             }
 
@@ -156,14 +154,13 @@ class PluginTest {
         testDir.root.apply {
             childDirectory("Android") {
                 sdkDir = childDirectory("sdk") {
-                    File(System.getProperty("sdkToolsPath"))
-                            .copyRecursively(childFile("tools"))
+                    File(System.getProperty("sdkPath")).copyRecursively(this)
                     childDirectory("tools") {
                         childDirectory("bin") {
-                            ProcessBuilder("chmod", "+x", childFile("sdkmanager").absolutePath).start()
-                                    .waitFor(2, TimeUnit.SECONDS)
-                            ProcessBuilder("chmod", "+x", childFile("avdmanager").absolutePath).start()
-                                    .waitFor(2, TimeUnit.SECONDS)
+                            listFiles()?.forEach {
+                                ProcessBuilder("chmod", "+x", it.absolutePath).start()
+                                        .waitFor(2, TimeUnit.SECONDS)
+                            }
                         }
                     }
                 }
@@ -223,14 +220,13 @@ class PluginTest {
         testDir.root.apply {
             childDirectory("Android") {
                 sdkDir = childDirectory("sdk") {
-                    File(System.getProperty("sdkToolsPath"))
-                            .copyRecursively(childFile("tools"))
+                    File(System.getProperty("sdkPath")).copyRecursively(this)
                     childDirectory("tools") {
                         childDirectory("bin") {
-                            ProcessBuilder("chmod", "+x", childFile("sdkmanager").absolutePath).start()
-                                    .waitFor(2, TimeUnit.SECONDS)
-                            ProcessBuilder("chmod", "+x", childFile("avdmanager").absolutePath).start()
-                                    .waitFor(2, TimeUnit.SECONDS)
+                            listFiles()?.forEach {
+                                ProcessBuilder("chmod", "+x", it.absolutePath).start()
+                                        .waitFor(2, TimeUnit.SECONDS)
+                            }
                         }
                     }
                 }
@@ -291,14 +287,13 @@ class PluginTest {
         testDir.root.apply {
             childDirectory("Android") {
                 sdkDir = childDirectory("sdk") {
-                    File(System.getProperty("sdkToolsPath"))
-                            .copyRecursively(childFile("tools"))
+                    File(System.getProperty("sdkPath")).copyRecursively(this)
                     childDirectory("tools") {
                         childDirectory("bin") {
-                            ProcessBuilder("chmod", "+x", childFile("sdkmanager").absolutePath).start()
-                                    .waitFor(2, TimeUnit.SECONDS)
-                            ProcessBuilder("chmod", "+x", childFile("avdmanager").absolutePath).start()
-                                    .waitFor(2, TimeUnit.SECONDS)
+                            listFiles()?.forEach {
+                                ProcessBuilder("chmod", "+x", it.absolutePath).start()
+                                        .waitFor(2, TimeUnit.SECONDS)
+                            }
                         }
                     }
                 }
@@ -368,14 +363,13 @@ class PluginTest {
         testDir.root.apply {
             childDirectory("Android") {
                 sdkDir = childDirectory("sdk") {
-                    File(System.getProperty("sdkToolsPath"))
-                            .copyRecursively(childFile("tools"))
+                    File(System.getProperty("sdkPath")).copyRecursively(this)
                     childDirectory("tools") {
                         childDirectory("bin") {
-                            ProcessBuilder("chmod", "+x", childFile("sdkmanager").absolutePath).start()
-                                    .waitFor(2, TimeUnit.SECONDS)
-                            ProcessBuilder("chmod", "+x", childFile("avdmanager").absolutePath).start()
-                                    .waitFor(2, TimeUnit.SECONDS)
+                            listFiles()?.forEach {
+                                ProcessBuilder("chmod", "+x", it.absolutePath).start()
+                                        .waitFor(2, TimeUnit.SECONDS)
+                            }
                         }
                     }
                 }
@@ -458,14 +452,13 @@ class PluginTest {
             }
             childDirectory("Android") {
                 sdkDir = childDirectory("sdk") {
-                    File(System.getProperty("sdkToolsPath"))
-                            .copyRecursively(childFile("tools"))
+                    File(System.getProperty("sdkPath")).copyRecursively(this)
                     childDirectory("tools") {
                         childDirectory("bin") {
-                            ProcessBuilder("chmod", "+x", childFile("sdkmanager").absolutePath).start()
-                                    .waitFor(2, TimeUnit.SECONDS)
-                            ProcessBuilder("chmod", "+x", childFile("avdmanager").absolutePath).start()
-                                    .waitFor(2, TimeUnit.SECONDS)
+                            listFiles()?.forEach {
+                                ProcessBuilder("chmod", "+x", it.absolutePath).start()
+                                        .waitFor(2, TimeUnit.SECONDS)
+                            }
                         }
                     }
                 }
@@ -539,14 +532,13 @@ class PluginTest {
             }
             childDirectory("Android") {
                 sdkDir = childDirectory("sdk") {
-                    File(System.getProperty("sdkToolsPath"))
-                            .copyRecursively(childFile("tools"))
+                    File(System.getProperty("sdkPath")).copyRecursively(this)
                     childDirectory("tools") {
                         childDirectory("bin") {
-                            ProcessBuilder("chmod", "+x", childFile("sdkmanager").absolutePath).start()
-                                    .waitFor(2, TimeUnit.SECONDS)
-                            ProcessBuilder("chmod", "+x", childFile("avdmanager").absolutePath).start()
-                                    .waitFor(2, TimeUnit.SECONDS)
+                            listFiles()?.forEach {
+                                ProcessBuilder("chmod", "+x", it.absolutePath).start()
+                                        .waitFor(2, TimeUnit.SECONDS)
+                            }
                         }
                     }
                 }
@@ -625,14 +617,13 @@ class PluginTest {
         testDir.root.apply {
             childDirectory("Android") {
                 sdkDir = childDirectory("sdk") {
-                    File(System.getProperty("sdkToolsPath"))
-                            .copyRecursively(childFile("tools"))
+                    File(System.getProperty("sdkPath")).copyRecursively(this)
                     childDirectory("tools") {
                         childDirectory("bin") {
-                            ProcessBuilder("chmod", "+x", childFile("sdkmanager").absolutePath).start()
-                                    .waitFor(2, TimeUnit.SECONDS)
-                            ProcessBuilder("chmod", "+x", childFile("avdmanager").absolutePath).start()
-                                    .waitFor(2, TimeUnit.SECONDS)
+                            listFiles()?.forEach {
+                                ProcessBuilder("chmod", "+x", it.absolutePath).start()
+                                        .waitFor(2, TimeUnit.SECONDS)
+                            }
                         }
                     }
                 }
@@ -686,6 +677,100 @@ class PluginTest {
 
         assertThat(buildResult.tasks).isEmpty()
         assertThat(buildResult.output).contains("Missing port for valid proxy config")
+    }
+
+
+    @Test
+    @UseTemporaryFolder
+    fun `full end to end run of the functionality`() {
+        var projectDir: File? = null
+        var avdDir: File? = null
+        var sdkDir: File? = null
+        testDir.root.apply {
+            childDirectory(".android") {
+                avdDir = childDirectory("avd")
+            }
+            childDirectory("Android") {
+                sdkDir = childDirectory("sdk") {
+                    File(System.getProperty("sdkPath")).copyRecursively(this)
+                    childDirectory("tools") {
+                        childDirectory("bin") {
+                            listFiles()?.forEach {
+                                ProcessBuilder("chmod", "+x", it.absolutePath).start()
+                                        .waitFor(2, TimeUnit.SECONDS)
+                            }
+                        }
+                    }
+                    childDirectory("platform-tools") {
+                        ProcessBuilder("chmod", "+x", childFile("adb").absolutePath).start()
+                                .waitFor(2, TimeUnit.SECONDS)
+                    }
+                }
+            }
+
+            projectDir = childDirectory("sampleProject") {
+                childFile("local.properties").writeText("sdk.dir=${sdkDir?.absolutePath}")
+                @Language("Groovy")
+                val buildFile = """
+                    buildscript {
+                        repositories {
+                            google()
+                            jcenter()
+                            mavenLocal()
+                        }
+                        dependencies {
+                            classpath "com.github.trevjonez:AVD-Gradle-Plugin:${System.getProperty("avd_plugin_version")}"
+                        }
+                    }
+                    apply plugin: 'AVD'
+
+                    AVD {
+                        configs {
+                            "Nexus 5x API O" {
+                                avd {
+                                    abi "x86"
+                                    api 26
+                                    type "google_apis"
+                                    deviceId "Nexus 5X"
+                                }
+                            }
+                        }
+                        acceptAndroidSdkLicense true
+                        acceptAndroidSdkPreviewLicense true
+                        avdPath file('${avdDir!!.absolutePath}')
+                ${
+                if (System.getProperty("useProxy") == "true") {
+                    """
+                        proxyType "http"
+                        proxyHost "${System.getProperty("proxyIp")}"
+                        proxyPort ${System.getProperty("proxyPort")}
+                        noHttps true
+                    """.trimIndent()
+                } else ""
+                }
+                    }
+                """.trimIndent()
+                childFile("build.gradle").writeText(buildFile)
+            }
+        }
+
+        var buildResult = GradleRunner.create()
+                .withProjectDir(projectDir)
+                .withDebug(true)
+                .withArguments("startAvd_Nexus_5x_API_O", "--stacktrace", "--info")
+                .forwardOutput()
+                .build()
+
+        assertThat(buildResult.task(":startAvd_Nexus_5x_API_O")?.outcome).isEqualTo(SUCCESS)
+
+        buildResult = GradleRunner.create()
+                .withProjectDir(projectDir)
+                .withDebug(true)
+                .withArguments("stopAvd_Nexus_5x_API_O", "--stacktrace", "--info")
+                .forwardOutput()
+                .build()
+
+        assertThat(buildResult.task(":stopAvd_Nexus_5x_API_O")?.outcome).isEqualTo(SUCCESS)
     }
 
     private fun File.childDirectory(dirName: String, block: File.() -> Unit = {}): File {

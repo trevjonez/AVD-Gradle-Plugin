@@ -51,7 +51,7 @@ test {
     testLogging.showStandardStreams = true
     testLogging.exceptionFormat = 'full'
     systemProperty("avd_plugin_version", version)
-    systemProperty("sdkToolsPath", "$buildDir/Android/sdk/tools/")
+    systemProperty("sdkPath", "$buildDir/Android/sdk/")
     if (localProperties.getProperty("useProxy", "false") == "true") {
         systemProperty("useProxy", "true")
         systemProperty("proxyIp", localProperties.getProperty("proxyIp", "localhost"))
@@ -61,7 +61,8 @@ test {
 }
 
 tasks.findByPath('test').dependsOn(':plugin:install')
-tasks.findByPath('test').dependsOn(':plugin:updateTools')
+tasks.findByPath('test').dependsOn(':plugin:unzipSdkTools')
+tasks.findByPath('test').dependsOn(':plugin:unzipPlatformTools')
 
 task sourcesJar(type: Jar, dependsOn: classes) {
     classifier 'sources'
@@ -103,19 +104,24 @@ task downloadSdkTools(type: Download) {
     onlyIfModified true
 }
 
+task downloadPlatformTools(type: Download) {
+    src "https://dl.google.com/android/repository/platform-tools-latest-darwin.zip"
+    dest file("$buildDir/platform-tools.zip")
+    onlyIfModified true
+}
+
 task unzipSdkTools(type: Copy) {
     from zipTree(downloadSdkTools.dest)
     into file("$buildDir/Android/sdk/")
     dependsOn downloadSdkTools
 }
 
-task updateTools(type: Exec) {
-    workingDir file("$buildDir/Android/sdk/tools/bin")
-    commandLine 'bash', '-c', 'yes Y | ./sdkmanager tools'
-    dependsOn unzipSdkTools
+task unzipPlatformTools(type: Copy) {
+    from zipTree(downloadPlatformTools.dest)
+    into file("$buildDir/Android/sdk/")
+    dependsOn downloadPlatformTools
 }
 
-//https://nickcharlton.net/posts/docker-via-homebrew.html
 task pullSquidContainer(type: Exec) {
     workingDir project.projectDir
     commandLine 'docker', 'pull', 'datadog/squid'

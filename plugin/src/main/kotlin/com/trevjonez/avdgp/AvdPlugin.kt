@@ -21,6 +21,7 @@ import com.trevjonez.avdgp.dsl.NamedConfigurationGroup
 import com.trevjonez.avdgp.dsl.ProxyConfig
 import com.trevjonez.avdgp.tasks.CreateAvdTask
 import com.trevjonez.avdgp.tasks.InstallSystemImageTask
+import com.trevjonez.avdgp.tasks.StartEmulatorTask
 import org.gradle.api.DefaultTask
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -77,7 +78,7 @@ class AvdPlugin : Plugin<Project> {
 
             extension.configs
                     .forEach { config ->
-                        project.createTask(
+                        val createTask = project.createTask(
                                 type = CreateAvdTask::class,
                                 name = config.createTaskName(),
                                 description = "Create android virtual device",
@@ -85,6 +86,15 @@ class AvdPlugin : Plugin<Project> {
                             sdkPath = sdkFile
                             configGroup = config
                             avdPath = extension.avdPath
+                        }
+
+                        project.createTask(
+                                type = StartEmulatorTask::class,
+                                name = config.startTaskName(),
+                                description = "Launch android virtual device",
+                                dependsOn = listOf(createTask)).apply {
+                            sdkPath = sdkFile
+                            configGroup = config
                         }
                     }
         }
