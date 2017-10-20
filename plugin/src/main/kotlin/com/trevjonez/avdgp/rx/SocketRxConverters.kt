@@ -20,7 +20,8 @@ import io.reactivex.Observable
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
-import okio.Okio
+import okio.Okio.buffer
+import okio.Okio.source
 import java.net.Socket
 
 fun Socket.toObservable(input: Observable<String>): Observable<String> {
@@ -36,7 +37,7 @@ fun Socket.toObservable(input: Observable<String>): Observable<String> {
                 out.flush()
             } addTo disposable
 
-            Okio.buffer(Okio.source(getInputStream()))
+            buffer(source(getInputStream()))
                     .readLines()
                     .subscribeOn(Schedulers.io())
                     .subscribe { emitter.onNext(it) } addTo disposable

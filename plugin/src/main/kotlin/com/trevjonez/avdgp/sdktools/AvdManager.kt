@@ -28,7 +28,6 @@ class AvdManager(private val avdManager: File,
                  private val logger: Logger,
                  private val avdPath: File? = null) {
 
-    //avdmanager create avd --name '26_6P_Playstore' --package 'system-images;android-26;google_apis_playstore;x86' --device 'Nexus 6P' --tag 'google_apis_playstore'
     fun createAvd(name: String, sdkKey: String, coreCount: Int, options: List<String>, iniPatches: List<Pair<String, String>>): Completable {
         val args = mutableListOf<String>(
                 avdManager.absolutePath,
@@ -41,6 +40,7 @@ class AvdManager(private val avdManager: File,
                     avdPath?.let { builder.environment().put("ANDROID_AVD_HOME", it.absolutePath) }
                 }
                 .toCompletable("avdmanager", logger)
+                .doOnError { logger.info("avdmanager create avd threw") }
                 .andThen { observer ->
                     try {
                         val avdDir = File(avdPath?.absolutePath ?: "${AndroidLocation.getFolder()}${File.separator}avd", "$name.avd")
@@ -57,6 +57,7 @@ class AvdManager(private val avdManager: File,
                         }
                         observer.onComplete()
                     } catch (error: Throwable) {
+                        logger.info("error while modifying ini file")
                         observer.onError(error)
                     }
                 }
@@ -68,14 +69,17 @@ class AvdManager(private val avdManager: File,
                     avdPath?.let { builder.environment().put("ANDROID_AVD_HOME", it.absolutePath) }
                 }
                 .toObservable("avdmanager", logger, Observable.never())
+                .doOnError { logger.info("avdmanager list avd threw")}
                 .flatMap { (stdOut, stdErr) ->
                     Observable.merge(
                             stdErr.readLines()
                                     .doOnNext { logger.info("stdErr: $it") }
+                                    .doOnError { logger.info("stdErr threw: avdmanager list avd") }
                                     .never()
                                     .map<Collector> { TODO() },
 
                             stdOut.drain()
+                                    .doOnError { logger.info("stdOut threw: avdmanager list avd") }
                                     .scan<Collector>(Collector.Unknown("")) { last, next ->
                                         if (last.done) {
                                             Collector.Unknown(next.toString())

@@ -35,20 +35,22 @@ class Adb(private val adbPath: File, private val logger: Logger) {
         return ProcessBuilder(adbPath.absolutePath, "devices")
                 .toObservable("adb", logger, Observable.never())
                 .subscribeOn(Schedulers.io())
+                .doOnError { logger.info("adb devices root observable threw") }
                 .flatMap { (stdOut, stdErr) ->
                     Observable.merge(
                             stdErr.readLines()
                                     .subscribeOn(Schedulers.io())
                                     .doOnNext { logger.info("stdErr: $it") }
-                                    .doOnError { logger.info("stdErr threw") }
+                                    .doOnError { logger.info("stdErr threw: adb devices") }
                                     .never(),
                             stdOut.readLines()
                                     .subscribeOn(Schedulers.io())
                                     .doOnNext { logger.info("stdOut: $it") }
-                                    .doOnError { logger.info("stdOut threw") }
+                                    .doOnError { logger.info("stdOut threw: adb devices") }
                                     .onErrorResumeNext { _: Throwable -> Observable.empty<String>() }
-                    ).map { it.trim() }
+                    )
                 }
+                .map { it.trim() }
                 .filter { it.endsWith("offline") || it.endsWith("device") || it.endsWith("unauthorized") }
                 .map { it.split(whitespace).let { Device(it[0], Device.Status.fromString(it[1])) } }
                 .filter { it.isEmulator }
@@ -62,6 +64,7 @@ class Adb(private val adbPath: File, private val logger: Logger) {
 
         return ProcessBuilder(adbPath.absolutePath, "-s", device.id, "emu", "kill")
                 .toCompletable("adb", logger)
+                .doOnError { logger.info("adb kill threw") }
     }
 
     data class Device(val id: String, val status: Status) {
@@ -89,14 +92,17 @@ class Adb(private val adbPath: File, private val logger: Logger) {
         return ProcessBuilder(adbPath.absolutePath, "-s", device.id, "shell", "getprop", property)
                 .toObservable("adb", logger, Observable.never())
                 .subscribeOn(Schedulers.io())
+                .doOnError { logger.info("adb shell getprop $property root observable threw") }
                 .flatMap { (stdOut, stdErr) ->
                     Observable.merge(
                             stdOut.readLines()
                                     .subscribeOn(Schedulers.io())
-                                    .doOnNext { logger.info("stdOut: $it") },
+                                    .doOnNext { logger.info("stdOut: $it") }
+                                    .doOnError { logger.info("stdOut threw: adb shell getprop $property") },
                             stdErr.readLines()
                                     .subscribeOn(Schedulers.io())
                                     .doOnNext { logger.info("stdErr: $it") }
+                                    .doOnError { logger.info("stdErr threw: adb shell getprop $property") }
                                     .never()
                     )
                 }

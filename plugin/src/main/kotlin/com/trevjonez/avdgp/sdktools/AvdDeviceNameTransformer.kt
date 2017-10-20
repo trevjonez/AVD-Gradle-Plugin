@@ -38,6 +38,7 @@ class AvdDeviceNameTransformer(private val logger: Logger)
                         Socket("localhost", device.emulatorPort())
                                 .toObservable(sendSubject.doOnNext { logger.info("sending: $it") })
                                 .subscribeOn(Schedulers.io())
+                                .doOnError { logger.info("Socket observable threw") }
                                 .skipWhile { it.trim() != "OK" }
                                 .doOnFirst { sendSubject.onNext("avd name") }
                                 .filter { it != "OK" }

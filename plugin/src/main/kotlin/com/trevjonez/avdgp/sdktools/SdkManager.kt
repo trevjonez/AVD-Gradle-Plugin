@@ -51,6 +51,7 @@ class SdkManager(private val sdkManager: File,
         val inSubject = PublishSubject.create<String>()
         return ProcessBuilder(args)
                 .toObservable("sdkmanager", logger, inSubject.doOnEach { logger.info("stdIn: $it") })
+                .doOnError { logger.info("sdkmanager install threw") }
                 .subscribeOn(Schedulers.io())
                 .flatMap { (stdOut, stdErr) ->
                     Observable.merge(
@@ -66,13 +67,15 @@ class SdkManager(private val sdkManager: File,
                                     .ofType(Line.Done::class.java)
                                     .map { it.value.trimEnd() }
                                     .distinctUntilChanged()
-                                    .doOnNext { logger.info("stdOut: $it") },
+                                    .doOnNext { logger.info("stdOut: $it") }
+                                    .doOnError { logger.info("stdOut threw: sdkmanager install") },
 
                             stdErr.readLines()
-                                    .doOnNext { logger.info("stdErr: $it") }
                                     .subscribeOn(Schedulers.io())
+                                    .doOnNext { logger.info("stdErr: $it") }
                                     .doOnNext { if (it.contains("Failed to find package")) throw Error.PackageNotFound(sdkKey) }
                                     .doOnNext { if (it.contains("Failed to create SDK root dir")) throw Error.Unknown(it) }
+                                    .doOnError { logger.info("stdErr threw: sdkmanager install") }
                                     .never()
                     )
                 }
@@ -91,10 +94,7 @@ class SdkManager(private val sdkManager: File,
                         InstallStatus.InFlight(next)
                     }
                 }
-                .to { it: String ->
-                    logger.info("callback hit")
-                    inSubject.onNext(it)
-                }
+                .to { it: String -> inSubject.onNext(it) }
     }
 
     enum class LicenseType {
