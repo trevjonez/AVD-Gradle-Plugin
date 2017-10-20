@@ -53,7 +53,9 @@ fun BufferedSource.drain(): Observable<Char> {
 
             if (!emitter.isDisposed) emitter.onComplete()
         } catch (error: Throwable) {
-            if (!emitter.isDisposed) emitter.onError(error)
+            if (error is IllegalStateException && error.message!!.contains("closed")) {
+                if (!emitter.isDisposed) emitter.onComplete()
+            } else if (!emitter.isDisposed) emitter.onError(error)
         }
     }
 }
