@@ -522,7 +522,7 @@ class PluginTest {
 
     @Test
     @UseTemporaryFolder
-    fun `create avd task is up to date on second invocation`() {
+    fun `create avd task is up to date or skipped on second invocation`() {
         var projectDir: File? = null
         var avdDir: File? = null
         var sdkDir: File? = null
@@ -606,7 +606,7 @@ class PluginTest {
                 .forwardOutput()
                 .build()
 
-        assertThat(buildResult.task(":createAvd_Nexus_5x_API_O")?.outcome).isEqualTo(UP_TO_DATE)
+        assertThat(buildResult.task(":createAvd_Nexus_5x_API_O")?.outcome).isIn(UP_TO_DATE, SKIPPED)
     }
 
     @Test

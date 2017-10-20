@@ -39,6 +39,9 @@ open class CreateAvdTask : DefaultTask() {
                 avdManager.listAvd().contains(configGroup.escapedName.trim())
             }
         }
+        onlyIf {
+            configGroup.avdConfig.forceCreate || !avdManager.listAvd().contains(configGroup.escapedName.trim())
+        }
     }
 
     @TaskAction
