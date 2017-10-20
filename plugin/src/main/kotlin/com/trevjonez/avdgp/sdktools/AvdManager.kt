@@ -43,7 +43,7 @@ class AvdManager(private val avdManager: File,
                 .toCompletable("avdmanager", logger)
                 .andThen { observer ->
                     try {
-                        val avdDir = File(avdPath?.absolutePath ?: AndroidLocation.getFolder(), "$name.avd")
+                        val avdDir = File(avdPath?.absolutePath ?: "${AndroidLocation.getFolder()}${File.separator}avd", "$name.avd")
                         val configIni = File(avdDir, "config.ini")
                         val properties = Properties()
                         properties.load(configIni.inputStream())
