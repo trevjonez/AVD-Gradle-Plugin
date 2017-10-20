@@ -71,7 +71,7 @@ class AvdManager(private val avdManager: File,
                 .flatMap { (stdOut, stdErr) ->
                     Observable.merge(
                             stdErr.readLines()
-                                    .doOnNext { logger.error("stdErr: $it") }
+                                    .doOnNext { logger.info("stdErr: $it") }
                                     .never()
                                     .map<Collector> { TODO() },
 

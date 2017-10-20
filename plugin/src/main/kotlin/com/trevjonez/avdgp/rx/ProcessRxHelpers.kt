@@ -96,7 +96,7 @@ fun ProcessBuilder.toCompletable(name: String, logger: Logger): Completable {
             val stdErr = buffer(source(process.errorStream))
             stdErr.readLines()
                     .subscribeOn(Schedulers.io())
-                    .subscribe { logger.error("stdErr: $it") } addTo disposable
+                    .subscribe { logger.info("stdErr: $it") } addTo disposable
 
             object : Disposable {
                 override fun isDisposed(): Boolean {

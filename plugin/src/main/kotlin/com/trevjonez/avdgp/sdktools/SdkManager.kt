@@ -69,7 +69,7 @@ class SdkManager(private val sdkManager: File,
                                     .doOnNext { logger.info("stdOut: $it") },
 
                             stdErr.readLines()
-                                    .doOnNext { logger.error("stdErr: $it") }
+                                    .doOnNext { logger.info("stdErr: $it") }
                                     .subscribeOn(Schedulers.io())
                                     .doOnNext { if (it.contains("Failed to find package")) throw Error.PackageNotFound(sdkKey) }
                                     .doOnNext { if (it.contains("Failed to create SDK root dir")) throw Error.Unknown(it) }
