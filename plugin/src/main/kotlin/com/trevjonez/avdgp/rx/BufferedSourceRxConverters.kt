@@ -55,8 +55,6 @@ fun BufferedSource.drain(): Observable<Char> {
         } catch (error: Throwable) {
             if (error is IllegalStateException && error.message?.contains("closed") == true) {
                 if (!emitter.isDisposed) emitter.onComplete()
-            } else if (error is IOException && error.message?.contains("Stream closed") == true) {
-                if (!emitter.isDisposed) emitter.onComplete()
             } else if (!emitter.isDisposed) emitter.onError(error)
         }
     }
@@ -82,8 +80,6 @@ fun BufferedSource.readLines(): Observable<String> {
             if (!emitter.isDisposed) emitter.onComplete()
         } catch (error: Throwable) {
             if (error is IllegalStateException && error.message?.contains("closed") == true) {
-                if (!emitter.isDisposed) emitter.onComplete()
-            } else if (error is IOException && error.message?.contains("Stream closed") == true) {
                 if (!emitter.isDisposed) emitter.onComplete()
             } else if (!emitter.isDisposed) emitter.onError(error)
         }

@@ -55,27 +55,22 @@ open class StartEmulatorTask : DefaultTask() {
     @TaskAction
     fun invoke() {
         val args = mutableListOf("/bin/sh", "-c")
-        val emuInvocation = mutableListOf(
-                "echo \"list avds\";",
-                File(sdkPath, "emulator${File.separator}emulator").absolutePath.replace(" ", "\\ "), "-list-avds ;",
-                "echo \"start emulator\";",
-                "nohup", File(sdkPath, "emulator${File.separator}emulator").absolutePath.replace(" ", "\\ ")).apply {
-            add("-avd")
-            add(configGroup.escapedName)
-            configGroup.launchOptions.forEach { add(it) }
-//            add("&")
-        }.joinToString(separator = " ")
+        val emuInvocation = mutableListOf("nohup",
+                File(sdkPath, "emulator${File.separator}emulator").absolutePath.replace(" ", "\\ "))
+                .apply {
+                    add("-avd")
+                    add(configGroup.escapedName)
+                    configGroup.launchOptions.forEach { add(it) }
+                }.joinToString(separator = " ")
         args.add(emuInvocation)
 
         //Launch emulator process
         var processError: Throwable? = null
-        val processDisposable = ProcessBuilder(args)
+        ProcessBuilder(args)
                 .also { builder ->
                     home?.let {
                         builder.environment().put("HOME", it.absolutePath.replace(" ", "\\ "))
                         builder.environment().put("ANDROID_HOME", File(it, "Android/sdk").absolutePath.replace(" ", "\\ "))
-//                        builder.environment().put("ANDROID_SDK_ROOT", File(it, "Android/sdk").absolutePath.replace(" ", "\\ "))
-//                        builder.environment().put("ANDROID_AVD_HOME", File(it, ".android/avd").absolutePath.replace(" ", "\\ "))
                     }
                 }
                 .toObservable("emulator", logger, Observable.never())
@@ -114,8 +109,6 @@ open class StartEmulatorTask : DefaultTask() {
                 .firstOrError()
                 .toCompletable()
                 .blockingAwait()
-
-        processDisposable.dispose()
     }
 
     private fun Single<Set<Adb.Device>>.keyedByName() = compose(deviceNameTransformer)

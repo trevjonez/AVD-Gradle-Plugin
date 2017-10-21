@@ -54,7 +54,7 @@ fun ProcessBuilder.toObservable(name: String, logger: Logger, stdIn: Observable<
                 }
 
                 override fun dispose() {
-                    logger.info("Disposing: ${command().joinToString(separator = " ")}", RuntimeException("Stacktrace not an error"))
+                    logger.info("Disposing: ${command().joinToString(separator = " ")}")
                     disposed = true
                     process.destroy()
                     stdOut.close()
@@ -106,7 +106,7 @@ fun ProcessBuilder.toCompletable(name: String, logger: Logger): Completable {
                 override fun isDisposed() = disposed
 
                 override fun dispose() {
-                    logger.info("Disposing: ${command().joinToString(separator = " ")}", RuntimeException("Stacktrace not an error"))
+                    logger.info("Disposing: ${command().joinToString(separator = " ")}")
                     disposed = true
                     process.destroy()
                     stdOut.close()
