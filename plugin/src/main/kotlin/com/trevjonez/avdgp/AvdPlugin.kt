@@ -86,7 +86,7 @@ class AvdPlugin : Plugin<Project> {
                                 dependsOn = listOf(project.tasks.getByName(config.installTaskName()))).apply {
                             sdkPath = sdkFile
                             configGroup = config
-                            avdPath = extension.avdPath
+                            avdPath = extension.testingConfig.home ?.let { File(it, ".android/avd") }
                         }
 
                         project.createTask(
@@ -96,7 +96,7 @@ class AvdPlugin : Plugin<Project> {
                                 dependsOn = listOf(createTask)).apply {
                             sdkPath = sdkFile
                             configGroup = config
-                            avdPath = extension.avdPath
+                            home = extension.testingConfig.home
                         }
 
                         project.createTask(

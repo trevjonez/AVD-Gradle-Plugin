@@ -19,7 +19,6 @@ package com.trevjonez.avdgp.dsl
 import groovy.lang.Closure
 import org.gradle.api.NamedDomainObjectContainer
 import org.gradle.api.Project
-import java.io.File
 
 open class AvdExtension(project: Project) {
     companion object {
@@ -71,8 +70,10 @@ open class AvdExtension(project: Project) {
         noHttps = value
     }
 
-    var avdPath: File? = null
-    fun avdPath(value: File?) {
-        avdPath = value
+    val testingConfig = TestingConfig()
+    fun testingConfig(configure: Closure<TestingConfig>) {
+        println("testingConfig is only here to enable functional tests of the plugin. Do not use.")
+        configure.delegate = testingConfig
+        configure.call()
     }
 }

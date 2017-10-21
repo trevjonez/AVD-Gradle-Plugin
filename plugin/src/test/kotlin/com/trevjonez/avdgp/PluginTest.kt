@@ -444,11 +444,10 @@ class PluginTest {
     @UseTemporaryFolder
     fun `create avd task completes successfully`() {
         var projectDir: File? = null
-        var avdDir: File? = null
         var sdkDir: File? = null
         testDir.root.apply {
             childDirectory(".android") {
-                avdDir = childDirectory("avd")
+                childDirectory("avd")
             }
             childDirectory("Android") {
                 sdkDir = childDirectory("sdk") {
@@ -493,7 +492,10 @@ class PluginTest {
                         }
                         acceptAndroidSdkLicense true
                         acceptAndroidSdkPreviewLicense true
-                        avdPath file('${avdDir!!.absolutePath}')
+
+                        testingConfig {
+                            home file('${testDir.root.absolutePath}')
+                        }
                 ${
                 if (System.getProperty("useProxy") == "true") {
                     """
@@ -524,11 +526,10 @@ class PluginTest {
     @UseTemporaryFolder
     fun `create avd task is up to date or skipped on second invocation`() {
         var projectDir: File? = null
-        var avdDir: File? = null
         var sdkDir: File? = null
         testDir.root.apply {
             childDirectory(".android") {
-                avdDir = childDirectory("avd")
+                childDirectory("avd")
             }
             childDirectory("Android") {
                 sdkDir = childDirectory("sdk") {
@@ -562,6 +563,14 @@ class PluginTest {
 
                     AVD {
                         configs {
+                            "Nexus 5x API 26" {
+                                avd {
+                                    abi "x86"
+                                    api 26
+                                    type "google_apis"
+                                    deviceId "Nexus 5X"
+                                }
+                            }
                             "Nexus 5x API O" {
                                 avd {
                                     abi "x86"
@@ -573,7 +582,10 @@ class PluginTest {
                         }
                         acceptAndroidSdkLicense true
                         acceptAndroidSdkPreviewLicense true
-                        avdPath file('${avdDir!!.absolutePath}')
+
+                        testingConfig {
+                            home file('${testDir.root.absolutePath}')
+                        }
                 ${
                 if (System.getProperty("useProxy") == "true") {
                     """
@@ -593,7 +605,7 @@ class PluginTest {
         var buildResult = GradleRunner.create()
                 .withProjectDir(projectDir)
                 .withDebug(true)
-                .withArguments("createAvd_Nexus_5x_API_O", "--stacktrace", "--info")
+                .withArguments("createAvd_Nexus_5x_API_O", "createAvd_Nexus_5x_API_26", "--stacktrace", "--info")
                 .forwardOutput()
                 .build()
 
@@ -681,34 +693,10 @@ class PluginTest {
 
     @Test
     @UseTemporaryFolder
-    fun `install image, create avd, start avd, kill avd`() {
+    fun happyPath() {
         var projectDir: File? = null
-        var avdDir: File? = null
-        var sdkDir: File? = null
         testDir.root.apply {
-            childDirectory(".android") {
-                avdDir = childDirectory("avd")
-            }
-            childDirectory("Android") {
-                sdkDir = childDirectory("sdk") {
-                    File(System.getProperty("sdkPath")).copyRecursively(this)
-                    childDirectory("tools") {
-                        childDirectory("bin") {
-                            listFiles()?.forEach {
-                                ProcessBuilder("chmod", "+x", it.absolutePath).start()
-                                        .waitFor(2, TimeUnit.SECONDS)
-                            }
-                        }
-                    }
-                    childDirectory("platform-tools") {
-                        ProcessBuilder("chmod", "+x", childFile("adb").absolutePath).start()
-                                .waitFor(2, TimeUnit.SECONDS)
-                    }
-                }
-            }
-
             projectDir = childDirectory("sampleProject") {
-                childFile("local.properties").writeText("sdk.dir=${sdkDir?.absolutePath}")
                 @Language("Groovy")
                 val buildFile = """
                     buildscript {
@@ -736,7 +724,6 @@ class PluginTest {
                         }
                         acceptAndroidSdkLicense true
                         acceptAndroidSdkPreviewLicense true
-                        avdPath file('${avdDir!!.absolutePath}')
                 ${
                 if (System.getProperty("useProxy") == "true") {
                     """
@@ -777,11 +764,10 @@ class PluginTest {
     fun `kill avd works even when not running`() {
         //This test seems odd but up to date doesn't work because of lacking history and outputs
         var projectDir: File? = null
-        var avdDir: File? = null
         var sdkDir: File? = null
         testDir.root.apply {
             childDirectory(".android") {
-                avdDir = childDirectory("avd")
+                childDirectory("avd")
             }
             childDirectory("Android") {
                 sdkDir = childDirectory("sdk") {
@@ -830,7 +816,10 @@ class PluginTest {
                         }
                         acceptAndroidSdkLicense true
                         acceptAndroidSdkPreviewLicense true
-                        avdPath file('${avdDir!!.absolutePath}')
+
+                        testingConfig {
+                            home file('${testDir.root.absolutePath}')
+                        }
                 ${
                 if (System.getProperty("useProxy") == "true") {
                     """

@@ -48,11 +48,13 @@ fun ProcessBuilder.toObservable(name: String, logger: Logger, stdIn: Observable<
                     } addTo disposable
 
             object : Disposable {
+                var disposed = false
                 override fun isDisposed(): Boolean {
-                    return !process.isAlive
+                    return disposed
                 }
 
                 override fun dispose() {
+                    disposed = true
                     process.destroy()
                     stdOut.close()
                     stdErr.close()
@@ -99,11 +101,11 @@ fun ProcessBuilder.toCompletable(name: String, logger: Logger): Completable {
                     .subscribe { logger.info("stdErr: $it") } addTo disposable
 
             object : Disposable {
-                override fun isDisposed(): Boolean {
-                    return !process.isAlive
-                }
+                var disposed = false
+                override fun isDisposed() = disposed
 
                 override fun dispose() {
+                    disposed = true
                     process.destroy()
                     stdOut.close()
                     stdErr.close()
@@ -111,8 +113,12 @@ fun ProcessBuilder.toCompletable(name: String, logger: Logger): Completable {
             } addTo disposable
 
 
-            val finished = process.waitFor(10, TimeUnit.SECONDS)
-            if (!finished) process.destroy()
+            val timeout = 60L
+            val finished = process.waitFor(timeout, TimeUnit.SECONDS)
+            if (!finished) {
+                logger.info("waited $timeout second(s). destroying process")
+                process.destroy()
+            }
 
             val result = if (finished) process.exitValue() else -424242
 

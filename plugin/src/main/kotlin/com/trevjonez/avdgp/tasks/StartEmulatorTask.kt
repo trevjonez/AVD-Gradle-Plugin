@@ -33,7 +33,7 @@ open class StartEmulatorTask : DefaultTask() {
     lateinit var sdkPath: File
     lateinit var configGroup: NamedConfigurationGroup
 
-    var avdPath: File? = null
+    var home: File? = null
 
     private val adb by lazy {
         Adb(File(sdkPath, "platform-tools${File.separator}adb"), logger)
@@ -55,11 +55,15 @@ open class StartEmulatorTask : DefaultTask() {
     @TaskAction
     fun invoke() {
         val args = mutableListOf("/bin/sh", "-c")
-        val emuInvocation = mutableListOf(File(sdkPath, "emulator${File.separator}emulator").absolutePath.replace(" ", "\\ ")).apply {
+        val emuInvocation = mutableListOf(
+                "echo \"list avds\";",
+                File(sdkPath, "emulator${File.separator}emulator").absolutePath.replace(" ", "\\ "), "-list-avds ;",
+                "echo \"start emulator\";",
+                "nohup", File(sdkPath, "emulator${File.separator}emulator").absolutePath.replace(" ", "\\ ")).apply {
             add("-avd")
             add(configGroup.escapedName)
             configGroup.launchOptions.forEach { add(it) }
-            add("&")
+//            add("&")
         }.joinToString(separator = " ")
         args.add(emuInvocation)
 
@@ -67,20 +71,27 @@ open class StartEmulatorTask : DefaultTask() {
         var processError: Throwable? = null
         val processDisposable = ProcessBuilder(args)
                 .also { builder ->
-                    builder.environment().put("ANDROID_SDK_ROOT", sdkPath.absolutePath)
-                    avdPath?.let { builder.environment().put("ANDROID_AVD_HOME", it.absolutePath) }
+                    home?.let {
+                        builder.environment().put("HOME", it.absolutePath.replace(" ", "\\ "))
+                        builder.environment().put("ANDROID_HOME", File(it, "Android/sdk").absolutePath.replace(" ", "\\ "))
+//                        builder.environment().put("ANDROID_SDK_ROOT", File(it, "Android/sdk").absolutePath.replace(" ", "\\ "))
+//                        builder.environment().put("ANDROID_AVD_HOME", File(it, ".android/avd").absolutePath.replace(" ", "\\ "))
+                    }
                 }
                 .toObservable("emulator", logger, Observable.never())
                 .subscribeOn(Schedulers.io())
+                .doOnError { logger.info("emulator command threw") }
                 .flatMap { (stdOut, stdErr) ->
                     Observable.merge(
                             stdOut.readLines()
                                     .subscribeOn(Schedulers.io())
-                                    .doOnNext { logger.info("stdOut: $it") },
+                                    .doOnNext { logger.info("stdOut: $it") }
+                                    .doOnError { logger.info("emulator stdOut threw") },
 
                             stdErr.readLines()
                                     .subscribeOn(Schedulers.io())
                                     .doOnNext { logger.info("stdErr: $it") }
+                                    .doOnError { logger.info("emulator stdErr threw") }
                     )
                 }
                 .subscribe({}, { processError = it })

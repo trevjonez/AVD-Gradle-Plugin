@@ -29,7 +29,6 @@ open class NamedConfigurationGroup(val name: String) {
     }
 
     val launchOptions: MutableList<String> = mutableListOf()
-
     fun launchOption(vararg values: String) {
         values.forEach { launchOptions.add(it) }
     }
