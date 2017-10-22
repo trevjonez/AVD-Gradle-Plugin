@@ -44,11 +44,21 @@ open class StartEmulatorTask : DefaultTask() {
     }
 
     init {
+        var alreadyRunning: Boolean? = null
         outputs.upToDateWhen {
-            adb.runningEmulators()
+            alreadyRunning ?: adb.runningEmulators()
                     .keyedByName()
                     .blockingGet()
                     .any { it.key == configGroup.escapedName }
+                    .also { alreadyRunning = it }
+        }
+        onlyIf {
+            alreadyRunning?.let { !it } ?: adb.runningEmulators()
+                    .keyedByName()
+                    .blockingGet()
+                    .any { it.key == configGroup.escapedName }
+                    .also { alreadyRunning = it }
+                    .let { !it }
         }
     }
 
