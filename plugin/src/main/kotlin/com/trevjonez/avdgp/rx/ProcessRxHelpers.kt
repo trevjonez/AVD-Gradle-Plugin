@@ -56,7 +56,6 @@ fun ProcessBuilder.toObservable(name: String, logger: Logger, stdIn: Observable<
                 override fun dispose() {
                     logger.info("Disposing: ${command().joinToString(separator = " ")}")
                     disposed = true
-                    process.destroy()
                     inWriter.close()
                 }
             } addTo disposable
