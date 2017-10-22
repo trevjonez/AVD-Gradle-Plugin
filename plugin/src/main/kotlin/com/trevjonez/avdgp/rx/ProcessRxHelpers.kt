@@ -24,7 +24,6 @@ import io.reactivex.schedulers.Schedulers
 import okio.Okio.buffer
 import okio.Okio.source
 import org.slf4j.Logger
-import java.util.concurrent.TimeUnit
 
 typealias StdOut = okio.BufferedSource
 typealias StdErr = okio.BufferedSource
@@ -105,24 +104,13 @@ fun ProcessBuilder.toCompletable(name: String, logger: Logger): Completable {
                 override fun dispose() {
                     logger.info("Disposing: ${command().joinToString(separator = " ")}")
                     disposed = true
-                    process.destroy()
                 }
             } addTo disposable
 
-
-            val timeout = 60L
-            val finished = process.waitFor(timeout, TimeUnit.SECONDS)
-            if (!finished) {
-                logger.info("waited $timeout second(s). destroying process")
-                process.destroy()
-            }
-
-            val result = if (finished) process.exitValue() else -424242
-
+            val result = process.waitFor()
             if (!emitter.isDisposed) {
                 when (result) {
                     0 -> emitter.onComplete()
-                    -424242 -> emitter.onError(RuntimeException("$name timed out"))
                     else -> emitter.onError(RuntimeException("$name exited with code $result"))
                 }
             }
