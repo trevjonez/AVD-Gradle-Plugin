@@ -1,4 +1,6 @@
 # AVD-Gradle-Plugin
+[![](https://jitpack.io/v/trevjonez/AVD-Gradle-Plugin.svg)](https://jitpack.io/#trevjonez/AVD-Gradle-Plugin)
+
 Gradle plugin to assist in managing android virtual devices. 
 
 ## Usage
@@ -13,7 +15,7 @@ buildscript {
         maven { url "https://jitpack.io" }
     }
     dependencies {
-        classpath "com.github.trevjonez:AVD-Gradle-Plugin:0.1.0"
+        classpath "com.github.trevjonez:AVD-Gradle-Plugin:0.2.0"
     }
 ```
 
@@ -23,7 +25,32 @@ apply plugin: 'AVD'
 ```
 
 3. Configure your AVDs to create via the DSL options
+
 ```groovy
+/* 
+ * Simple configuration example 
+ */
+AVD {
+    acceptAndroidSdkLicense true
+    acceptAndroidSdkPreviewLicense true
+
+    configs {
+        'Nexus 5X API 26' {
+            avd {
+                abi 'x86'
+                api 26
+                type 'google_apis'
+                deviceId 'Nexus 5X'
+            }
+        }
+    }
+}
+```
+
+```groovy
+/* 
+ * Full DSL Options 
+ */
 AVD {
     //By default the install task(s) up to date check will run `sdkmanager` to see if an update is available
     //If disabled this will only check if the system image dir is present
@@ -38,8 +65,6 @@ AVD {
     proxyPort 8080 //default null (optional)
     
     noHttps true //default false (optional)
-    
-    avdPath file("/some/path/to/avd") //defaults to `$HOME/.android/avd`
     
     configs {
         tablet_25 {
@@ -75,7 +100,7 @@ AVD {
  
  AVD plugin version | Gradle version | Android plugin version
  ----- | ---- | -----
- 0.1.0 | 4.2.1  | 3.0.0-rc1
+ 0.2.0 | 4.2.1  | 3.0.0-rc2
  
  
 ## License
