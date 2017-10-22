@@ -57,8 +57,6 @@ fun ProcessBuilder.toObservable(name: String, logger: Logger, stdIn: Observable<
                     logger.info("Disposing: ${command().joinToString(separator = " ")}")
                     disposed = true
                     process.destroy()
-                    stdOut.close()
-                    stdErr.close()
                     inWriter.close()
                 }
             } addTo disposable
@@ -109,8 +107,6 @@ fun ProcessBuilder.toCompletable(name: String, logger: Logger): Completable {
                     logger.info("Disposing: ${command().joinToString(separator = " ")}")
                     disposed = true
                     process.destroy()
-                    stdOut.close()
-                    stdErr.close()
                 }
             } addTo disposable
 
