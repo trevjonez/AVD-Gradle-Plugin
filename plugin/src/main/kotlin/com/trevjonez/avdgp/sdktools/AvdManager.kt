@@ -51,6 +51,7 @@ class AvdManager(private val avdManager: File,
                         val width = properties["hw.lcd.width"]
                         properties.setProperty("skin.name", "${width}x$height")
                         properties.setProperty("hw.cput.ncore", coreCount.toString())
+                        properties.setProperty("hw.keyboard", "yes")
                         iniPatches.forEach { (k, v) -> properties.setProperty(k, v) }
                         configIni.writer().use {
                             properties.store(it, "Created by AVD-Gradle-Plugin via avdmanager")
