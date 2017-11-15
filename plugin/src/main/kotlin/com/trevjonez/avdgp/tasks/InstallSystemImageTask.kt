@@ -16,9 +16,7 @@
 
 package com.trevjonez.avdgp.tasks
 
-import com.android.sdklib.devices.Abi
-import com.trevjonez.avdgp.dsl.ApiLevel
-import com.trevjonez.avdgp.dsl.ApiType
+import com.trevjonez.avdgp.dsl.NamedConfigurationGroup
 import com.trevjonez.avdgp.dsl.ProxyConfig
 import com.trevjonez.avdgp.sdktools.SdkManager
 import org.gradle.api.DefaultTask
@@ -28,9 +26,7 @@ import java.io.File
 open class InstallSystemImageTask : DefaultTask() {
 
     lateinit var sdkPath: File
-    lateinit var abi: Abi
-    lateinit var api: ApiLevel
-    lateinit var type: ApiType
+    lateinit var configGroup: NamedConfigurationGroup
     var acceptSdkLicense = false
     var acceptSdkPreviewLicense = false
     var autoUpdate = true
@@ -40,16 +36,16 @@ open class InstallSystemImageTask : DefaultTask() {
     private val imageDir: File
         get() {
             return File(sdkPath, "system-images" +
-                    File.separator + api.cliValue +
-                    File.separator + type.cliValue +
-                    File.separator + abi.cpuArch)
+                    File.separator + configGroup.avdConfig.api.cliValue +
+                    File.separator + configGroup.avdConfig.type.cliValue +
+                    File.separator + configGroup.avdConfig.abi)
         }
 
     private val manager by lazy { SdkManager(File(sdkPath, "tools${File.separator}bin${File.separator}sdkmanager"), logger, proxyConfig, noHttps) }
 
     init {
         outputs.upToDateWhen {
-            val (obs, _) = manager.install(systemImageKey())
+            val (obs, _) = manager.install(configGroup.systemImageKey())
 
             var error: Throwable? = null
             var hasPendingUpdate = false
@@ -61,7 +57,7 @@ open class InstallSystemImageTask : DefaultTask() {
             }
                     .takeUntil { it is SdkManager.InstallStatus.AwaitingLicense }
                     .blockingSubscribe({ }, { error = it },
-                            { logger.info("Install Available Check Complete \"${systemImageKey()}\"") })
+                            { logger.info("Install Available Check Complete \"${configGroup.systemImageKey()}\"") })
 
             error?.let { throw it }
 
@@ -75,7 +71,7 @@ open class InstallSystemImageTask : DefaultTask() {
 
     @TaskAction
     fun invoke() {
-        val (obs, consoleInput) = manager.install(systemImageKey())
+        val (obs, consoleInput) = manager.install(configGroup.systemImageKey())
 
         var error: Throwable? = null
 
@@ -93,13 +89,9 @@ open class InstallSystemImageTask : DefaultTask() {
                                     "You must manually install or grant AVD plugin permission to auto agree")
                 }
             }
-        }, { error = it }, { logger.info("Install Complete \"${systemImageKey()}\"") })
+        }, { error = it }, { logger.info("Install Complete \"${configGroup.systemImageKey()}\"") })
 
         error?.let { throw it }
-    }
-
-    private fun systemImageKey(): String {
-        return "system-images;${api.cliValue};${type.cliValue};$abi"
     }
 }
 

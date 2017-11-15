@@ -66,9 +66,7 @@ class AvdPlugin : Plugin<Project> {
                                 name = config.installTaskName(),
                                 description = "Install/Update system image").apply {
                             sdkPath = sdkFile
-                            api = config.avdConfig.api
-                            abi = config.avdConfig.abi
-                            type = config.avdConfig.type
+                            configGroup = config
                             acceptSdkLicense = extension.acceptAndroidSdkLicense
                             acceptSdkPreviewLicense = extension.acceptAndroidSdkPreviewLicense
                             autoUpdate = extension.autoUpdate

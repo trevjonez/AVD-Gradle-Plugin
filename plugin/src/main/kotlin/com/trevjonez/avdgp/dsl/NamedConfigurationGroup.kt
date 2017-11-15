@@ -34,7 +34,7 @@ open class NamedConfigurationGroup(val name: String) {
     }
 
     fun systemImageKey(): String {
-        return "system-images;${avdConfig.api.cliValue};${avdConfig.type.cliValue};${avdConfig.abi.cpuArch}"
+        return "system-images;${avdConfig.api.cliValue};${avdConfig.type.cliValue};${avdConfig.abi}"
     }
 
     fun installTaskName(): String {
