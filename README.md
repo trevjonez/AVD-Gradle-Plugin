@@ -15,7 +15,7 @@ buildscript {
         maven { url "https://jitpack.io" }
     }
     dependencies {
-        classpath "com.github.trevjonez:AVD-Gradle-Plugin:0.2.0"
+        classpath "com.github.trevjonez:AVD-Gradle-Plugin:0.2.1"
     }
 ```
 
@@ -100,7 +100,7 @@ AVD {
  
  AVD plugin version | Gradle version | Android plugin version
  ----- | ---- | -----
- 0.2.0 | 4.2.1  | 3.0.0-rc2
+ 0.2.1 | 4.3.1  | 3.0.0
  
  
 ## License

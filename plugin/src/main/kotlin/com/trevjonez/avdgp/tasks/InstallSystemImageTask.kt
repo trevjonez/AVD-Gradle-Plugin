@@ -99,7 +99,7 @@ open class InstallSystemImageTask : DefaultTask() {
     }
 
     private fun systemImageKey(): String {
-        return "system-images;${api.cliValue};${type.cliValue};${abi.cpuArch}"
+        return "system-images;${api.cliValue};${type.cliValue};$abi"
     }
 }
 
