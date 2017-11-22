@@ -22,7 +22,6 @@ import com.trevjonez.avdgp.rx.toObservable
 import com.trevjonez.avdgp.sdktools.Adb
 import com.trevjonez.avdgp.sdktools.AvdDeviceNameTransformer
 import io.reactivex.Observable
-import io.reactivex.Single
 import io.reactivex.schedulers.Schedulers
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.TaskAction
@@ -47,14 +46,14 @@ open class StartEmulatorTask : DefaultTask() {
         var alreadyRunning: Boolean? = null
         outputs.upToDateWhen {
             alreadyRunning ?: adb.runningEmulators()
-                    .keyedByName()
+                    .compose(deviceNameTransformer)
                     .blockingGet()
                     .any { it.key == configGroup.escapedName }
                     .also { alreadyRunning = it }
         }
         onlyIf {
             alreadyRunning?.let { !it } ?: adb.runningEmulators()
-                    .keyedByName()
+                    .compose(deviceNameTransformer)
                     .blockingGet()
                     .any { it.key == configGroup.escapedName }
                     .also { alreadyRunning = it }
@@ -103,7 +102,7 @@ open class StartEmulatorTask : DefaultTask() {
 
         //Read running emulators until ours shows up so we have the port to query
         val device = Observable.interval(2, TimeUnit.SECONDS)
-                .switchMapSingle { adb.runningEmulators().keyedByName() }
+                .switchMapSingle { adb.runningEmulators().compose(deviceNameTransformer) }
                 .doOnNext { processError?.let { throw it } }
                 .skipWhile { !it.keys.contains(configGroup.escapedName) || it[configGroup.escapedName]!!.status != Adb.Device.Status.ONLINE }
                 .firstOrError()
@@ -117,10 +116,13 @@ open class StartEmulatorTask : DefaultTask() {
                 .map { adb.queryProperty("init.svc.bootanim", device) }
                 .skipWhile { it != "stopped" }
                 .firstOrError()
+                .compose { incoming ->
+                    configGroup.timeout?.let {
+                        incoming.timeout(it, TimeUnit.SECONDS)
+                    } ?: incoming
+                }
                 .toCompletable()
                 .blockingAwait()
     }
-
-    private fun Single<Set<Adb.Device>>.keyedByName() = compose(deviceNameTransformer)
 }
 

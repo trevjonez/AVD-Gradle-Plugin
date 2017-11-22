@@ -15,8 +15,9 @@ buildscript {
         maven { url "https://jitpack.io" }
     }
     dependencies {
-        classpath "com.github.trevjonez:AVD-Gradle-Plugin:0.2.1"
+        classpath "com.github.trevjonez:AVD-Gradle-Plugin:0.3.0"
     }
+}
 ```
 
 2. Apply the plugin
@@ -79,6 +80,7 @@ AVD {
             }
             launchOption("-wipe-data")
             launchOption("-memory", "2048") //varargs
+            timeout 120 //default null (optional) in seconds
         }
     }
 }
@@ -100,7 +102,7 @@ AVD {
  
  AVD plugin version | Gradle version | Android plugin version
  ----- | ---- | -----
- 0.2.1 | 4.3.1  | 3.0.0
+ 0.3.0 | 4.3.1  | 3.0.0
  
  
 ## License
