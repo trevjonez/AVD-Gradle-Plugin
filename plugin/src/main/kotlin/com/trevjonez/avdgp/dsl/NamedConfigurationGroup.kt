@@ -33,6 +33,11 @@ open class NamedConfigurationGroup(val name: String) {
         values.forEach { launchOptions.add(it) }
     }
 
+    var timeout: Long? = null
+    fun timeout(value: Long?) {
+        timeout = value
+    }
+
     fun systemImageKey(): String {
         return "system-images;${avdConfig.api.cliValue};${avdConfig.type.cliValue};${avdConfig.abi}"
     }

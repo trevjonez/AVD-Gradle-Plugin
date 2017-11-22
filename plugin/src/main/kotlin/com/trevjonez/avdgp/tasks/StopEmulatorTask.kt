@@ -19,10 +19,10 @@ package com.trevjonez.avdgp.tasks
 import com.trevjonez.avdgp.dsl.NamedConfigurationGroup
 import com.trevjonez.avdgp.sdktools.Adb
 import com.trevjonez.avdgp.sdktools.AvdDeviceNameTransformer
-import io.reactivex.Single
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.TaskAction
 import java.io.File
+import java.util.concurrent.TimeUnit
 
 open class StopEmulatorTask : DefaultTask() {
     lateinit var sdkPath: File
@@ -39,15 +39,14 @@ open class StopEmulatorTask : DefaultTask() {
     @TaskAction
     fun invoke() {
         val error = adb.runningEmulators()
-                .keyedByName()
+                .compose(deviceNameTransformer)
                 .map { it[configGroup.escapedName]!! }
                 .flatMapCompletable { adb.kill(it) }
+                .timeout(20, TimeUnit.SECONDS)
                 .blockingGet()
 
         if (error != null && error !is NullPointerException) {
             throw error
         }
     }
-
-    private fun Single<Set<Adb.Device>>.keyedByName() = compose(deviceNameTransformer)
 }

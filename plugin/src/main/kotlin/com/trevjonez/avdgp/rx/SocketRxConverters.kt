@@ -31,16 +31,16 @@ fun Socket.toObservable(input: Observable<String>): Observable<String> {
             emitter.setDisposable(disposable)
 
             val out = getOutputStream().bufferedWriter()
-            input.observeOn(Schedulers.io()).subscribe {
+            input.observeOn(Schedulers.io()).subscribe({
                 out.write(it)
                 out.newLine()
                 out.flush()
-            } addTo disposable
+            }, emitter::onError) addTo disposable
 
             buffer(source(getInputStream()))
                     .readLines()
                     .subscribeOn(Schedulers.io())
-                    .subscribe { emitter.onNext(it) } addTo disposable
+                    .subscribe(emitter::onNext) addTo disposable
 
             object : Disposable {
                 override fun isDisposed(): Boolean {

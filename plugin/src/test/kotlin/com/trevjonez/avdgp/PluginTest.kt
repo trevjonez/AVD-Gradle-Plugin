@@ -720,6 +720,7 @@ class PluginTest {
                                     type "google_apis"
                                     deviceId "Nexus 5X"
                                 }
+                                timeout 60
                             }
                         }
                         acceptAndroidSdkLicense true

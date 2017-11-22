@@ -18,7 +18,6 @@ package com.trevjonez.avdgp.sdktools
 
 import com.trevjonez.avdgp.rx.never
 import com.trevjonez.avdgp.rx.readLines
-import com.trevjonez.avdgp.rx.toCompletable
 import com.trevjonez.avdgp.rx.toObservable
 import io.reactivex.Completable
 import io.reactivex.Observable
@@ -26,6 +25,9 @@ import io.reactivex.Single
 import io.reactivex.schedulers.Schedulers
 import org.slf4j.Logger
 import java.io.File
+import java.net.Socket
+import java.net.SocketException
+import java.util.concurrent.TimeUnit
 
 class Adb(private val adbPath: File, private val logger: Logger) {
 
@@ -62,9 +64,38 @@ class Adb(private val adbPath: File, private val logger: Logger) {
         if (!device.isEmulator)
             return Completable.error(IllegalArgumentException("Attempting to kill something other than an AVD"))
 
-        return ProcessBuilder(adbPath.absolutePath, "-s", device.id, "emu", "kill")
-                .toCompletable("adb", logger)
-                .doOnError { logger.info("adb kill threw") }
+        return Socket("localhost", device.emulatorPort())
+                .toObservable(
+                        Observable.interval(200, TimeUnit.MILLISECONDS)
+                                .map { "ping" }
+                                .doOnNext { logger.info("sending ping via idling socket") }
+                )
+                .subscribeOn(Schedulers.io())
+                .doOnNext { logger.info("idling socket received: $it") }
+                .ignoreElements()
+                .onErrorComplete { it is SocketException }
+                .doOnComplete { logger.info("socket was hung up. avd killed") }
+                .doOnSubscribe {
+                    ProcessBuilder(adbPath.absolutePath, "-s", device.id, "emu", "kill")
+                            .toObservable("adb", logger, Observable.never())
+                            .subscribeOn(Schedulers.io())
+                            .doOnError { logger.info("adb kill threw", it) }
+                            .flatMap { (stdOut, stdErr) ->
+                                Observable.merge(
+                                        stdErr.readLines()
+                                                .subscribeOn(Schedulers.io())
+                                                .doOnNext { logger.info("stdErr: $it") }
+                                                .doOnError { logger.info("stdErr threw: adb kill") }
+                                                .never(),
+                                        stdOut.readLines()
+                                                .subscribeOn(Schedulers.io())
+                                                .doOnNext { logger.info("stdOut: $it") }
+                                                .doOnError { logger.info("stdOut threw: adb kill") }
+                                                .onErrorResumeNext { _: Throwable -> Observable.empty<String>() }
+                                )
+                            }
+                            .subscribe()
+                }
     }
 
     data class Device(val id: String, val status: Status) {
@@ -98,6 +129,10 @@ class Adb(private val adbPath: File, private val logger: Logger) {
                             stdOut.readLines()
                                     .subscribeOn(Schedulers.io())
                                     .doOnNext { logger.info("stdOut: $it") }
+                                    .timeout(2, TimeUnit.SECONDS) {
+                                        logger.info("getProp TimedOut. emitting:\"getProp:TimeOut\"")
+                                        Observable.just("getProp:TimeOut")
+                                    }
                                     .doOnError { logger.info("stdOut threw: adb shell getprop $property") },
                             stdErr.readLines()
                                     .subscribeOn(Schedulers.io())
