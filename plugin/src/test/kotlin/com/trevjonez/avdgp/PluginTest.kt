@@ -187,7 +187,7 @@ class PluginTest {
                             "Nexus 5x API O" {
                                 avd {
                                     abi "x86_64"
-                                    api 26
+                                    api 14
                                     type "google_apis"
                                     deviceId "Nexus 5X"
                                 }
@@ -202,13 +202,13 @@ class PluginTest {
         val buildResult = GradleRunner.create()
                 .withProjectDir(projectDir)
                 .withDebug(true)
-                .withArguments("installSystemImage_api26_GoogleApis_x86_64", "--stacktrace", "--info")
+                .withArguments("installSystemImage_api14_GoogleApis_x86_64", "--stacktrace", "--info")
                 .forwardOutput()
                 .buildAndFail()
 
         assertThat(buildResult.output)
-                .contains("Failed to find package system-images;android-26;google_apis;x86_64")
-        assertThat(buildResult.task(":installSystemImage_api26_GoogleApis_x86_64")?.outcome)
+                .contains("Failed to find package system-images;android-14;google_apis;x86_64")
+        assertThat(buildResult.task(":installSystemImage_api14_GoogleApis_x86_64")?.outcome)
                 .isEqualTo(FAILED)
     }
 
@@ -328,6 +328,7 @@ class PluginTest {
                         }
                         acceptAndroidSdkLicense true
                         acceptAndroidSdkPreviewLicense true
+                        acceptHaxmLicense true
 
                 ${
                 if (System.getProperty("useProxy") == "true") {
@@ -404,6 +405,7 @@ class PluginTest {
                         }
                         acceptAndroidSdkLicense true
                         acceptAndroidSdkPreviewLicense true
+                        acceptHaxmLicense true
                 ${
                 if (System.getProperty("useProxy") == "true") {
                     """
@@ -492,6 +494,7 @@ class PluginTest {
                         }
                         acceptAndroidSdkLicense true
                         acceptAndroidSdkPreviewLicense true
+                        acceptHaxmLicense true
 
                         testingConfig {
                             home file('${testDir.root.absolutePath}')
@@ -582,6 +585,7 @@ class PluginTest {
                         }
                         acceptAndroidSdkLicense true
                         acceptAndroidSdkPreviewLicense true
+                        acceptHaxmLicense true
 
                         testingConfig {
                             home file('${testDir.root.absolutePath}')
@@ -725,6 +729,7 @@ class PluginTest {
                         }
                         acceptAndroidSdkLicense true
                         acceptAndroidSdkPreviewLicense true
+                        acceptHaxmLicense true
                 ${
                 if (System.getProperty("useProxy") == "true") {
                     """
@@ -817,6 +822,7 @@ class PluginTest {
                         }
                         acceptAndroidSdkLicense true
                         acceptAndroidSdkPreviewLicense true
+                        acceptHaxmLicense true
 
                         testingConfig {
                             home file('${testDir.root.absolutePath}')
@@ -845,6 +851,88 @@ class PluginTest {
                 .build()
 
         assertThat(buildResult.task(":stopAvd_Nexus_5x_API_26")?.outcome).isEqualTo(SUCCESS)
+    }
+
+    @Test
+    @UseTemporaryFolder
+    fun happyPathWithMultiModuleAndroidBuild() {
+        var projectDir: File? = null
+        testDir.root.apply {
+            projectDir = childDirectory("sampleProject") {
+                @Language("Groovy")
+                val buildFile = """
+                    buildscript {
+                        repositories {
+                            google()
+                            jcenter()
+                            mavenLocal()
+                        }
+                        dependencies {
+                            classpath "com.github.trevjonez:AVD-Gradle-Plugin:${System.getProperty("avd_plugin_version")}"
+                        }
+                    }
+                """.trimIndent()
+                childFile("build.gradle").writeText(buildFile)
+
+                @Language("Groovy")
+                val settingsFile = """
+                    include ':app'
+                """
+                childFile("settings.gradle").writeText(settingsFile)
+
+                @Language("Groovy")
+                val childProjectBuildFile = """
+                    apply plugin: 'AVD'
+
+                    AVD {
+                        configs {
+                            "Nexus 5x API 26" {
+                                avd {
+                                    abi "x86"
+                                    api 26
+                                    type "google_apis"
+                                    deviceId "Nexus 5X"
+                                }
+                            }
+                        }
+                        acceptAndroidSdkLicense true
+                        acceptAndroidSdkPreviewLicense true
+                        acceptHaxmLicense true
+                ${
+                if (System.getProperty("useProxy") == "true") {
+                    """
+                        proxyType "http"
+                        proxyHost "${System.getProperty("proxyIp")}"
+                        proxyPort ${System.getProperty("proxyPort")}
+                        noHttps true
+                    """.trimIndent()
+                } else ""
+                }
+                    }
+                """.trimIndent()
+                childDirectory("app") {
+                    childFile("build.gradle").writeText(childProjectBuildFile)
+                }
+            }
+        }
+
+        var buildResult = GradleRunner.create()
+                .withProjectDir(projectDir)
+                .withDebug(true)
+                .withArguments("app:startAvd_Nexus_5x_API_26", "--stacktrace", "--info")
+                .forwardOutput()
+                .build()
+
+        assertThat(buildResult.task(":app:startAvd_Nexus_5x_API_26")?.outcome).isEqualTo(SUCCESS)
+
+        buildResult = GradleRunner.create()
+                .withProjectDir(projectDir)
+                .withDebug(true)
+                .withArguments("app:stopAvd_Nexus_5x_API_26", "--stacktrace", "--info")
+                .forwardOutput()
+                .build()
+
+        assertThat(buildResult.task(":app:stopAvd_Nexus_5x_API_26")?.outcome).isEqualTo(SUCCESS)
     }
 
     private fun File.childDirectory(dirName: String, block: File.() -> Unit = {}): File {

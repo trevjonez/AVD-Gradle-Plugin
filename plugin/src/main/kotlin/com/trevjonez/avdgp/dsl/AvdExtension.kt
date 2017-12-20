@@ -45,6 +45,11 @@ open class AvdExtension(project: Project) {
         acceptAndroidSdkLicense = value
     }
 
+    var acceptHaxmLicense = false
+    fun acceptHaxmLicense(value: Boolean) {
+        acceptHaxmLicense = value
+    }
+
     var autoUpdate: Boolean = true
     fun autoUpdate(value: Boolean) {
         autoUpdate = value

@@ -15,7 +15,7 @@ buildscript {
         maven { url "https://jitpack.io" }
     }
     dependencies {
-        classpath "com.github.trevjonez:AVD-Gradle-Plugin:0.3.0"
+        classpath "com.github.trevjonez:AVD-Gradle-Plugin:0.4.0"
     }
 }
 ```
@@ -34,6 +34,7 @@ apply plugin: 'AVD'
 AVD {
     acceptAndroidSdkLicense true
     acceptAndroidSdkPreviewLicense true
+    acceptHaxmLicense true
 
     configs {
         'Nexus 5X API 26' {
@@ -59,6 +60,7 @@ AVD {
     
     acceptAndroidSdkLicense true //default false (required)
     acceptAndroidSdkPreviewLicense true //default false (required)
+    acceptHaxmLicense true //default false (by context)
     
     //Note: if any proxy settings are specified all must be present
     proxyType "http" //default null (optional)
@@ -102,7 +104,7 @@ AVD {
  
  AVD plugin version | Gradle version | Android plugin version
  ----- | ---- | -----
- 0.3.0 | 4.3.1  | 3.0.0
+ 0.4.0 | 4.4.1  | 3.0.1
  
  
 ## License
@@ -119,3 +121,22 @@ AVD {
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
     See the License for the specific language governing permissions and
     limitations under the License.
+    
+## Running plugin tests.
+The happy path tests run in your real android sdk installation due to me being lazy about figuring 
+out how to sandbox the emulator commands. Everything else is ran in temp directories and should not 
+cause any mess to accumulate in the sdk dir of your machine.
+
+Because the tests are mostly end to end and/or functional they do install SDK's and start stop emulators. 
+This means that they will consume a great deal of download bandwidth and disk space. 
+To combat the bandwidth issue and typically save tons of time waiting for large downloads I recommend 
+running a squid proxy with the included config file so that sdkmanager is able to download from the squid cache.
+You can enable that behavior by creating a `local.properties` file in the `plugin` dir of this repo
+ and adding the following options:
+
+```properties
+useProxy=true
+proxyIp=192.168.0.50
+```
+
+This has proved to work well for me using the `datadog/squid` docker image.

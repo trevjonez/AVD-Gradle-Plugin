@@ -69,6 +69,7 @@ class AvdPlugin : Plugin<Project> {
                             configGroup = config
                             acceptSdkLicense = extension.acceptAndroidSdkLicense
                             acceptSdkPreviewLicense = extension.acceptAndroidSdkPreviewLicense
+                            acceptHaxmLicense = extension.acceptHaxmLicense
                             autoUpdate = extension.autoUpdate
                             proxyConfig = proxy
                             noHttps = extension.noHttps
@@ -84,7 +85,7 @@ class AvdPlugin : Plugin<Project> {
                                 dependsOn = listOf(project.tasks.getByName(config.installTaskName()))).apply {
                             sdkPath = sdkFile
                             configGroup = config
-                            avdPath = extension.testingConfig.home ?.let { File(it, ".android/avd") }
+                            avdPath = extension.testingConfig.home?.let { File(it, ".android/avd") }
                         }
 
                         project.createTask(
@@ -109,20 +110,27 @@ class AvdPlugin : Plugin<Project> {
     }
 
     private val sdkFile: File by lazy {
-        val localPropFile = File(project.projectDir, "local.properties")
-        if (localPropFile.exists()) {
-
-            val localProperties = Properties().apply {
-                load(localPropFile.inputStream())
-            }
-            val sdkDir = localProperties.getProperty("sdk.dir")
-            if (sdkDir != null && File(sdkDir).exists()) {
-                logger.info("Using sdk.dir path for avd plugin: $sdkDir")
-                return@lazy File(sdkDir)
-            }
-        } else {
-            logger.info("local.properties doesn't exist at ${localPropFile.absolutePath}")
-        }
+        var nextProject: Project? = project
+        do {
+            nextProject?.let { File(it.projectDir, "local.properties") }
+                    ?.let { propFile ->
+                        if (propFile.exists()) {
+                            val localProperties = Properties().apply {
+                                load(propFile.inputStream())
+                            }
+                            val sdkDir = localProperties.getProperty("sdk.dir")
+                            if (sdkDir != null && File(sdkDir).exists()) {
+                                logger.info("Using sdk.dir path for avd plugin: $sdkDir")
+                                return@lazy File(sdkDir)
+                            } else {
+                                logger.info("local.properties at ${propFile.absolutePath} didn't define a valid sdk.dir")
+                            }
+                        } else {
+                            logger.info("local.properties doesn't exist at ${propFile.absolutePath}")
+                        }
+                    }
+            nextProject = nextProject?.parent
+        } while (nextProject != null)
 
         val androidHome = System.getenv("ANDROID_HOME")
         if (androidHome != null && File(androidHome).exists()) {

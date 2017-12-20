@@ -29,6 +29,7 @@ open class InstallSystemImageTask : DefaultTask() {
     lateinit var configGroup: NamedConfigurationGroup
     var acceptSdkLicense = false
     var acceptSdkPreviewLicense = false
+    var acceptHaxmLicense = false
     var autoUpdate = true
     var proxyConfig: ProxyConfig? = null
     var noHttps = false
@@ -80,6 +81,7 @@ open class InstallSystemImageTask : DefaultTask() {
                 val isApproved = when (status.licenseType) {
                     SdkManager.LicenseType.Sdk -> acceptSdkLicense
                     SdkManager.LicenseType.SdkPreview -> acceptSdkPreviewLicense
+                    SdkManager.LicenseType.Haxm -> acceptHaxmLicense
                 }
                 if (isApproved) {
                     consoleInput("Y")
