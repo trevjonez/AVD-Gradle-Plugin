@@ -33,7 +33,7 @@ class SdkManager(private val sdkManager: File,
                  private val noHttps: Boolean) {
 
     companion object {
-        private val licenseHeaderRegex = Regex("""License android-sdk-(preview-)?license:""")
+        private val licenseHeaderRegex = Regex("""License (android-sdk-(preview-)?license)?(intel-android-extra-license)?:""")
     }
 
     fun install(sdkKey: String): Pair<Observable<InstallStatus>, (String) -> Unit> {
@@ -98,7 +98,7 @@ class SdkManager(private val sdkManager: File,
     }
 
     enum class LicenseType {
-        Sdk, SdkPreview;
+        Sdk, SdkPreview, Haxm;
 
         companion object {
             @JvmStatic
@@ -106,6 +106,7 @@ class SdkManager(private val sdkManager: File,
                 return when {
                     stdOut.contains("License android-sdk-license:") -> Sdk
                     stdOut.contains("License android-sdk-preview-license:") -> SdkPreview
+                    stdOut.contains("License intel-android-extra-license:") -> Haxm
                     else -> throw IllegalArgumentException("No matching stdOut title:\n $stdOut")
                 }
             }

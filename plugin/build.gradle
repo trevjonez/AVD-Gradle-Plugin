@@ -121,29 +121,3 @@ task unzipPlatformTools(type: Copy) {
     into file("$buildDir/Android/sdk/")
     dependsOn downloadPlatformTools
 }
-
-task pullSquidContainer(type: Exec) {
-    workingDir project.projectDir
-    commandLine 'docker', 'pull', 'datadog/squid'
-}
-
-task createSquidContainer(type: Exec) {
-    workingDir project.projectDir
-    commandLine('docker',  'create',
-            '--name', 'squid',
-            '--publish', '3128:3128',
-            '--volume', "${project.projectDir.absolutePath}/squid.conf:/etc/squid/squid.conf",
-            '--volume', "${project.projectDir.absolutePath}/squid/cache:/etc/squid/spool",
-            'datadog/squid')
-    dependsOn pullSquidContainer
-}
-
-task startSquidContainer(type: Exec) {
-    workingDir project.projectDir
-    commandLine('docker',  'start', 'squid')
-}
-
-task stopSquidContainer(type: Exec) {
-    workingDir project.projectDir
-    commandLine('docker',  'stop', 'squid')
-}
