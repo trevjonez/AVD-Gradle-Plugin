@@ -3,5 +3,7 @@ build/
 
 .idea
 !.idea/copyright
+!.idea/codeStyles/codeStyleConfig.xml
 *.iml
 local.properties
+plugin/squid

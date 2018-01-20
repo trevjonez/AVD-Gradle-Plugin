@@ -18,7 +18,6 @@ package com.trevjonez.avdgp.dsl
 
 import groovy.lang.Closure
 import org.gradle.api.NamedDomainObjectContainer
-import org.gradle.api.NamedDomainObjectFactory
 import org.gradle.api.Project
 
 open class AvdExtension(project: Project) {
@@ -34,5 +33,52 @@ open class AvdExtension(project: Project) {
 
     fun configs(closure: Closure<Any>) {
         configs.configure(closure)
+    }
+
+    var acceptAndroidSdkPreviewLicense = false
+    fun acceptAndroidSdkPreviewLicense(value: Boolean) {
+        acceptAndroidSdkPreviewLicense = value
+    }
+
+    var acceptAndroidSdkLicense = false
+    fun acceptAndroidSdkLicense(value: Boolean) {
+        acceptAndroidSdkLicense = value
+    }
+
+    var acceptHaxmLicense = false
+    fun acceptHaxmLicense(value: Boolean) {
+        acceptHaxmLicense = value
+    }
+
+    var autoUpdate: Boolean = true
+    fun autoUpdate(value: Boolean) {
+        autoUpdate = value
+    }
+
+    var proxyType: String? = null
+    fun proxyType(value: String?) {
+        proxyType = value
+    }
+
+    var proxyHost: String? = null
+    fun proxyHost(value: String?) {
+        proxyHost = value
+    }
+
+    var proxyPort: Int? = null
+    fun proxyPort(value: Int?) {
+        proxyPort = value
+    }
+
+    var noHttps: Boolean = false
+    fun noHttps(value: Boolean) {
+        noHttps = value
+    }
+
+    val testingConfig = TestingConfig()
+    fun testingConfig(configure: Closure<TestingConfig>) {
+        println("testingConfig is only here to enable functional tests of the plugin. Do not use.")
+        configure.delegate = testingConfig
+        configure.call()
     }
 }

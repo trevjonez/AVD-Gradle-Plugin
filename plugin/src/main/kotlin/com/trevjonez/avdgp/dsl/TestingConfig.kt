@@ -16,11 +16,10 @@
 
 package com.trevjonez.avdgp.dsl
 
-class EmuConfig {
-    var memory: String? = null
-    var wipeData = true
-    var netDelay = NetDelay.NONE
-    var netSpeed = NetSpeed.FULL
-    var port: Int? = null
-    var otherArgs: String? = null
+import java.io.File
+
+data class TestingConfig(var home: File? = null) {
+    fun home(value: File?) {
+        home = value
+    }
 }

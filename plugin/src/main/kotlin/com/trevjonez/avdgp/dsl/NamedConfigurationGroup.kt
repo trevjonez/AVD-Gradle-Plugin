@@ -28,22 +28,33 @@ open class NamedConfigurationGroup(val name: String) {
         configure.call()
     }
 
-    val emuConfig = EmuConfig()
-    fun emu(configure: Closure<EmuConfig>) {
-        configure.delegate = emuConfig
-        configure.call()
+    val launchOptions: MutableList<String> = mutableListOf()
+    fun launchOption(vararg values: String) {
+        values.forEach { launchOptions.add(it) }
     }
 
-    var autoUpdate: Boolean = true
-    fun autoUpdate(value: Boolean) {
-        autoUpdate = value
+    var timeout: Long? = null
+    fun timeout(value: Long?) {
+        timeout = value
     }
 
     fun systemImageKey(): String {
-        return "system-images;${avdConfig.api.cliValue};${avdConfig.type.cliValue};${avdConfig.abi.cpuArch}"
+        return "system-images;${avdConfig.api.cliValue};${avdConfig.type.cliValue};${avdConfig.abi}"
     }
 
     fun installTaskName(): String {
         return "installSystemImage_api${avdConfig.api.name}_${avdConfig.type.displayName()}_${avdConfig.abi.cpuArch}"
+    }
+
+    fun createTaskName(): String {
+        return "createAvd_$escapedName"
+    }
+
+    fun startTaskName(): String {
+        return "startAvd_$escapedName"
+    }
+
+    fun stopTaskName(): String {
+        return "stopAvd_$escapedName"
     }
 }
