@@ -97,15 +97,32 @@ install {
 }
 
 import de.undercouch.gradle.tasks.download.Download
+import org.apache.tools.ant.taskdefs.condition.Os
 
 task downloadSdkTools(type: Download) {
-    src "https://dl.google.com/android/repository/sdk-tools-darwin-4333796.zip"
+
+    def isWindows = false
+    if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+        println "*** WINDOWS "
+        isWindows = true
+    }
+    src isWindows ? "https://dl.google.com/android/repository/sdk-tools-windows-4333796.zip"
+            :"https://dl.google.com/android/repository/sdk-tools-darwin-4333796.zip"
+
     dest file("$buildDir/sdk-tools.zip")
     onlyIfModified true
 }
 
 task downloadPlatformTools(type: Download) {
-    src "https://dl.google.com/android/repository/platform-tools-latest-darwin.zip"
+
+    def isWindows = false
+    if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+        println "*** WINDOWS "
+        isWindows = true
+    }
+
+    src isWindows ? "https://dl.google.com/android/repository/platform-tools-latest-windows.zip"
+            :"https://dl.google.com/android/repository/platform-tools-latest-darwin.zip"
     dest file("$buildDir/platform-tools.zip")
     onlyIfModified true
 }
