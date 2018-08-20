@@ -717,10 +717,10 @@ class PluginTest {
 
                     AVD {
                         configs {
-                            "Nexus 5x API 26" {
+                            "Nexus 5x API 28" {
                                 avd {
                                     abi "x86"
-                                    api 26
+                                    api 28
                                     type "google_apis"
                                     deviceId "Nexus 5X"
                                 }
@@ -749,20 +749,20 @@ class PluginTest {
         var buildResult = GradleRunner.create()
                 .withProjectDir(projectDir)
                 .withDebug(true)
-                .withArguments("startAvd_Nexus_5x_API_26", "--stacktrace", "--info")
+                .withArguments("startAvd_Nexus_5x_API_28", "--stacktrace", "--info")
                 .forwardOutput()
                 .build()
 
-        assertThat(buildResult.task(":startAvd_Nexus_5x_API_26")?.outcome).isEqualTo(SUCCESS)
+        assertThat(buildResult.task(":startAvd_Nexus_5x_API_28")?.outcome).isEqualTo(SUCCESS)
 
         buildResult = GradleRunner.create()
                 .withProjectDir(projectDir)
                 .withDebug(true)
-                .withArguments("stopAvd_Nexus_5x_API_26", "--stacktrace", "--info")
+                .withArguments("stopAvd_Nexus_5x_API_28", "--stacktrace", "--info")
                 .forwardOutput()
                 .build()
 
-        assertThat(buildResult.task(":stopAvd_Nexus_5x_API_26")?.outcome).isEqualTo(SUCCESS)
+        assertThat(buildResult.task(":stopAvd_Nexus_5x_API_28")?.outcome).isEqualTo(SUCCESS)
     }
 
     @Test

@@ -29,7 +29,9 @@ enum class ApiLevel(val cliValue: String) {
     `23`("android-23"),
     `24`("android-24"),
     `25`("android-25"),
-    `26`("android-26");
+    `26`("android-26"),
+    `27`("android-27"),
+    `28`("android-28");
 
     companion object {
 
@@ -48,6 +50,8 @@ enum class ApiLevel(val cliValue: String) {
                 "24" -> `24`
                 "25", "N" -> `25`
                 "26", "O" -> `26`
+                "27" -> `27`
+                "28", "P" -> `28`
                 else -> throw IllegalArgumentException("Unable to match '$value' to an api level")
             }
         }
@@ -67,6 +71,8 @@ enum class ApiLevel(val cliValue: String) {
                 24 -> `24`
                 25 -> `25`
                 26 -> `26`
+                27 -> `27`
+                28 -> `28`
                 else -> throw IllegalArgumentException("Unable to match '$value' to an api level")
             }
         }

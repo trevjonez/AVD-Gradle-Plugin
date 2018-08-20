@@ -15,7 +15,7 @@ buildscript {
         maven { url "https://jitpack.io" }
     }
     dependencies {
-        classpath "com.github.trevjonez:AVD-Gradle-Plugin:0.4.0"
+        classpath "com.github.trevjonez:AVD-Gradle-Plugin:0.5.0"
     }
 }
 ```
@@ -37,10 +37,10 @@ AVD {
     acceptHaxmLicense true
 
     configs {
-        'Nexus 5X API 26' {
+        'Nexus 5X API 28' {
             avd {
                 abi 'x86'
-                api 26
+                api 28
                 type 'google_apis'
                 deviceId 'Nexus 5X'
             }
@@ -73,12 +73,12 @@ AVD {
         tablet_25 {
             avd {
                 abi "x86" | "x86_64" | "armeabi-v7a" | "arm64-v8a" //(default x86_64)
-                api 25 //(default highest stable api)
+                api 28 //(default is from com.android.sdklib.SdkVersionInfo.HIGHEST_KNOWN_STABLE_API 26 as of AGP 3.1.4)
                 type 'google_apis_playstore' | 'google_apis' | 'default' | 'android-wear' | 'android-tv' //(default google_apis)
                 deviceId "pixel" //from `avdmanager list device`
                 sdSize "1000M" //optional
                 coreCount 2 //optional defaults to # of cores on machine
-                configIniProperty("key", "value) //add or overwrite config.ini file property
+                configIniProperty("key", "value") //add or overwrite config.ini file property
             }
             launchOption("-wipe-data")
             launchOption("-memory", "2048") //varargs
@@ -103,8 +103,9 @@ AVD {
  Highly likely that it won't work on windows. Open issues and lets talk if you need that. 
  
  AVD plugin version | Gradle version | Android plugin version
- ----- | ---- | -----
- 0.4.0 | 4.4.1  | 3.0.1
+ ------ | ------ | ------
+ 0.5.0  | 4.9    | 3.1.4
+ 0.4.0  | 4.4.1  | 3.0.1
  
  
 ## License
@@ -140,3 +141,7 @@ proxyIp=192.168.0.50
 ```
 
 This has proved to work well for me using the `datadog/squid` docker image.
+
+```bash
+docker create --name squid --publish 3128:3128/tcp --volume /home/tjones/avd-plugin/squid.conf:/etc/squid/squid.conf --volume /home/tjones/avd-plugin/squid/cache:/etc/squid/spool --net=host datadog/squid
+```

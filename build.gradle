@@ -15,8 +15,8 @@
  */
 
 buildscript {
-    ext.kotlin_version = '1.2.10'
-    ext.android_plugin_version = '3.0.1'
+    ext.kotlin_version = '1.2.61'
+    ext.android_plugin_version = '3.1.4'
 
     repositories {
         jcenter()
@@ -39,6 +39,5 @@ task clean(type: Delete) {
     delete rootProject.buildDir
 }
 
-
 group = 'com.github.trevjonez'
-version = '0.4.0'
+version = '0.5.0'
